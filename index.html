@@ -146,7 +146,7 @@ let S = {
 function emptyForm(){
   return {data:today(),descricao:'',fornecedor:'',segmento:'',centro:'',forma:'Pix',
     valorTotal:'',totalParcelas:'1',parcelasPagas:'1',valorParcela:'',
-    dataPrimeiraParcela:'',status:'Pago à Vista',obs:''};
+    dataPrimeiraParcela:'',status:'Pago à Vista',obs:'',cartaoNome:'',cartaoNumero:'',cartaoBandeira:'',cartaoVencimento:''};
 }
 
 // ── REST API ──────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ function rowToTx(row){
     totalPago:parseFloat(row.total_pago)||0,
     status:row.status||'Pago à Vista',
     dataPrimeiraParcela:row.data_primeira_parcela||'',
-    obs:row.obs||'', createdAt:row.created_at,
+    obs:row.obs||'', cartaoNome:row.cartao_nome||'', cartaoNumero:row.cartao_numero||'', cartaoBandeira:row.cartao_bandeira||'', cartaoVencimento:row.cartao_vencimento||'', createdAt:row.created_at,
   };
 }
 
@@ -201,7 +201,7 @@ function txToRow(tx){
     valor_total:tx.valorTotal, parcelas:tx.parcelasPagas,
     total_parcelas:tx.totalParcelas, valor_parcela:tx.valorParcela,
     total_pago:tx.totalPago, status:tx.status,
-    data_primeira_parcela:tx.dataPrimeiraParcela||null,
+    data_primeira_parcela:tx.dataPrimeiraParcela||null, cartao_nome:tx.cartaoNome||null, cartao_numero:tx.cartaoNumero||null, cartao_bandeira:tx.cartaoBandeira||null, cartao_vencimento:tx.cartaoVencimento||null,
     obs:tx.obs, created_at:tx.createdAt||new Date().toISOString()
   };
 }
@@ -495,7 +495,7 @@ function renderTxCard(tx){
       <span class="pill" style="background:${ss.bg};color:${ss.c}">${esc(tx.status)}</span>
       ${seg?`<span class="pill" style="background:#EBF8FF;color:#2C5282">${esc(seg)}</span>`:''}
       ${tx.centro?`<span class="pill" style="background:#F3E8FF;color:#553C9A">${esc(tx.centro)}</span>`:''}
-      ${tx.forma?`<span class="pill" style="background:#F0FFF4;color:#276749">${esc(tx.forma)}</span>`:''}
+      ${tx.forma?`<span class="pill" style="background:#F0FFF4;color:#276749">${esc(tx.forma)}${tx.cartaoBandeira?' · '+esc(tx.cartaoBandeira):''}${tx.cartaoNumero?' *'+esc(tx.cartaoNumero):''}</span>`:''}
       <span class="pill" style="background:#EDF2F7;color:#4A5568">${esc(tx.data)}</span>
     </div>
     ${tx.obs?`<div class="tx-obs">${esc(tx.obs)}</div>`:''}
@@ -560,6 +560,29 @@ function renderForm(){
       <div class="field"><label class="field-label">Observações</label>
         <textarea class="input" id="f_obs" rows="3" placeholder="Nº Pix, notas…">${esc(f.obs)}</textarea>
       </div>
+      ${(f.forma==='Cartão de Crédito'||f.forma==='Cartão de Débito')?`
+      <div style="border-top:1.5px dashed #E2E8F0;margin:6px 0 14px;padding-top:14px">
+        <div style="font-size:11px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">💳 Dados do Cartão (opcional)</div>
+        <div class="input-grid">
+          <div class="field"><label class="field-label">Nome / Banco</label>
+            <input class="input" id="f_cartaoNome" value="${esc(f.cartaoNome)}" placeholder="Ex: Nubank, Itaú">
+          </div>
+          <div class="field"><label class="field-label">Bandeira</label>
+            <select class="input" id="f_cartaoBandeira">
+              <option value="">Selecione…</option>
+              ${['Visa','Mastercard','Elo','Amex','Hipercard'].map(b=>`<option value="${b}" ${f.cartaoBandeira===b?'selected':''}>${b}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="input-grid">
+          <div class="field"><label class="field-label">Final do Cartão</label>
+            <input class="input" id="f_cartaoNumero" value="${esc(f.cartaoNumero)}" placeholder="Ex: 0140" maxlength="4">
+          </div>
+          <div class="field"><label class="field-label">Vencimento da Fatura</label>
+            <input class="input" id="f_cartaoVencimento" value="${esc(f.cartaoVencimento)}" placeholder="Ex: Dia 10">
+          </div>
+        </div>
+      </div>`:''}
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" style="flex:1" onclick="cancelForm()">Cancelar</button>
@@ -741,7 +764,7 @@ function onParcelasChange(){
 
 function readForm(){
   const g=id=>document.getElementById(id)?.value||'';
-  return{data:g('f_data'),descricao:g('f_descricao'),fornecedor:g('f_fornecedor'),segmento:g('f_segmento'),centro:g('f_centro'),forma:g('f_forma'),status:g('f_status'),valorTotal:g('f_valorTotal'),totalParcelas:g('f_totalParcelas'),parcelasPagas:g('f_parcelasPagas'),valorParcela:g('f_valorParcela'),dataPrimeiraParcela:g('f_dataPrimeiraParcela'),obs:g('f_obs')};
+  return{data:g('f_data'),descricao:g('f_descricao'),fornecedor:g('f_fornecedor'),segmento:g('f_segmento'),centro:g('f_centro'),forma:g('f_forma'),status:g('f_status'),valorTotal:g('f_valorTotal'),totalParcelas:g('f_totalParcelas'),parcelasPagas:g('f_parcelasPagas'),valorParcela:g('f_valorParcela'),dataPrimeiraParcela:g('f_dataPrimeiraParcela'),obs:g('f_obs'),cartaoNome:g('f_cartaoNome'),cartaoNumero:g('f_cartaoNumero'),cartaoBandeira:g('f_cartaoBandeira'),cartaoVencimento:g('f_cartaoVencimento')};
 }
 
 async function handleSave(){
@@ -755,7 +778,7 @@ async function handleSave(){
   const pp=Math.min(parseInt(f.parcelasPagas)||0,tp);
   const vp=parseFloat(f.valorParcela)||vt;
   const totalPago=f.status==='Pago à Vista'||f.status==='Parcelado Quitado'?vt:f.status==='Parcelado em Andamento'?pp*vp:0;
-  const tx={id:S.editId||uid(),data:f.data,descricao:f.descricao.trim(),fornecedor:f.fornecedor,segmento:f.segmento,centro:f.centro,forma:f.forma,valorTotal:vt,totalParcelas:tp,parcelasPagas:pp,valorParcela:vp,totalPago:Math.min(totalPago,vt),status:f.status,dataPrimeiraParcela:f.dataPrimeiraParcela,obs:f.obs,createdAt:S.editId?(S.txs.find(t=>t.id===S.editId)?.createdAt||new Date().toISOString()):new Date().toISOString()};
+  const tx={id:S.editId||uid(),data:f.data,descricao:f.descricao.trim(),fornecedor:f.fornecedor,segmento:f.segmento,centro:f.centro,forma:f.forma,valorTotal:vt,totalParcelas:tp,parcelasPagas:pp,valorParcela:vp,totalPago:Math.min(totalPago,vt),status:f.status,dataPrimeiraParcela:f.dataPrimeiraParcela,obs:f.obs,cartaoNome:f.cartaoNome,cartaoNumero:f.cartaoNumero,cartaoBandeira:f.cartaoBandeira,cartaoVencimento:f.cartaoVencimento,createdAt:S.editId?(S.txs.find(t=>t.id===S.editId)?.createdAt||new Date().toISOString()):new Date().toISOString()};
   try{
     await upsertTx(tx);
     showToast(S.editId?'✅ Atualizado!':'✅ Salvo!');
