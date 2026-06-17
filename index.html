@@ -116,7 +116,7 @@ const SUPABASE_KEY = 'sb_publishable_3ATrJc5dTkijTW-iSRL5Qw_7l1-NIj1';
 const SEGMENTOS = ['Alvenaria / Estrutura','Elétrica','Hidráulica','Gás','Piso e Revestimento','Pintura','Marcenaria / Móveis Planejados','Esquadrias / Vidros','Forro / Gesso','Eletrodomésticos','Mobiliário','Iluminação / Lustres','Ar-Condicionado / Climatização','Limpeza / Dedetização','Paisagismo / Jardinagem','Decoração e Acabamentos','Mão de Obra Geral','Projeto / Arquitetura','Taxas e Documentos','Outros'];
 const CENTROS = ['Sala de Estar','Sala de Jantar','Cozinha','Área de Serviço','Quarto Principal','Quarto 2','Quarto 3','Banheiro Principal','Banheiro Social','Lavabo','Varanda / Terraço','Garagem','Área Gourmet','Fachada / Área Externa','Geral / Toda a Casa'];
 const FORMAS = ['Pix','Cartão de Crédito','Cartão de Débito','Boleto','Transferência','Dinheiro','Cheque'];
-const STATUS_OPT = ['Pago à Vista','Parcelado em Andamento','Parcelado Quitado','Pendente','Cancelado'];
+const STATUS_OPT = ['Pago à Vista','Entrada + Parcelado','Parcelado em Andamento','Parcelado Quitado','Pendente','Cancelado'];
 const CHART_COLORS = ['#2B6CB0','#2F855A','#B7791F','#9B2C2C','#6B46C1','#0987A0','#276749','#C05621'];
 const STATUS_STYLE = {
   'Pago à Vista':{bg:'#C6F6D5',c:'#22543D'},
@@ -124,6 +124,7 @@ const STATUS_STYLE = {
   'Parcelado Quitado':{bg:'#BEE3F8',c:'#2A4365'},
   'Pendente':{bg:'#FED7D7',c:'#742A2A'},
   'Cancelado':{bg:'#EDF2F7',c:'#4A5568'},
+  'Entrada + Parcelado':{bg:'#E9D8FD',c:'#553C9A'},
 };
 
 const fmt = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
@@ -201,7 +202,7 @@ function txToRow(tx){
     valor_total:tx.valorTotal, parcelas:tx.parcelasPagas,
     total_parcelas:tx.totalParcelas, valor_parcela:tx.valorParcela,
     total_pago:tx.totalPago, status:tx.status,
-    data_primeira_parcela:tx.dataPrimeiraParcela||null, cartao_nome:tx.cartaoNome||null, cartao_numero:tx.cartaoNumero||null, cartao_bandeira:tx.cartaoBandeira||null, cartao_vencimento:tx.cartaoVencimento||null,
+    data_primeira_parcela:tx.dataPrimeiraParcela||null, cartao_nome:tx.cartaoNome||null, cartao_numero:tx.cartaoNumero||null, cartao_bandeira:tx.cartaoBandeira||null, cartao_vencimento:tx.cartaoVencimento||null, entrada_valor:tx.entradaValor||null, entrada_forma:tx.entradaForma||null, entrada_data:tx.entradaData||null,
     obs:tx.obs, created_at:tx.createdAt||new Date().toISOString()
   };
 }
@@ -489,6 +490,7 @@ function renderTxCard(tx){
       <div>
         <div class="tx-amount">${fmt(tx.valorTotal)}</div>
         ${tx.status==='Parcelado em Andamento'?`<div class="tx-paid">${tx.parcelasPagas}/${tx.totalParcelas} parcelas</div>`:''}
+        ${tx.status==='Entrada + Parcelado'?`<div class="tx-paid">Entrada: ${fmt(tx.entradaValor)} · ${tx.parcelasPagas}/${tx.totalParcelas} parc.</div>`:''}
       </div>
     </div>
     <div class="pills-row">
@@ -509,7 +511,7 @@ function renderTxCard(tx){
 // ── FORM ──────────────────────────────────────────────────────────
 function renderForm(){
   const f=S.form;
-  const isParc=f.status.includes('Parcelado');
+  const isParc=f.status.includes('Parcelado')||f.status==='Entrada + Parcelado';
   return`
     ${S.editId?'<div class="edit-banner">✏️ Editando lançamento</div>':''}
     ${!S.editId?`<div class="pdf-drop ${S.extracting?'loading':''}" id="pdfDrop" onclick="triggerPdf()">
@@ -538,6 +540,27 @@ function renderForm(){
       </div>
       <div class="field"><label class="field-label">Valor Total do Contrato (R$) *</label>
         <input class="input" id="f_valorTotal" type="number" step="0.01" value="${esc(f.valorTotal)}" placeholder="0.00" oninput="onValorChange()">
+      </div>
+      <div id="entradaSection" ${f.status==='Entrada + Parcelado'?'':'style="display:none"'}>
+        <div style="border-top:1.5px dashed #E2E8F0;margin:0 0 14px;padding-top:14px">
+          <div style="font-size:11px;font-weight:700;color:#553C9A;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">💜 Dados da Entrada</div>
+          <div class="input-grid">
+            <div class="field"><label class="field-label">Data da Entrada</label>
+              <input class="input" id="f_entradaData" type="text" value="${esc(f.entradaData)}" placeholder="DD/MM/AAAA">
+            </div>
+            <div class="field"><label class="field-label">Valor da Entrada (R$)</label>
+              <input class="input" id="f_entradaValor" type="number" step="0.01" value="${esc(f.entradaValor)}" placeholder="0.00">
+            </div>
+          </div>
+          <div class="field"><label class="field-label">Forma da Entrada</label>
+            <select class="input" id="f_entradaForma">
+              ${['Pix','Dinheiro','Cartão de Crédito','Cartão de Débito','Transferência'].map(fm=>`<option value="${esc(fm)}" ${f.entradaForma===fm?'selected':''}>${esc(fm)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div style="border-top:1.5px dashed #E2E8F0;margin:0 0 14px;padding-top:14px">
+          <div style="font-size:11px;font-weight:700;color:#B7791F;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">📅 Parcelas do Restante</div>
+        </div>
       </div>
       <div id="parcSection" ${isParc?'':'style="display:none"'}>
         <div class="input-grid">
@@ -744,8 +767,10 @@ function updateSearch(v){S.search=v;document.querySelector('.content').innerHTML
 function updateSegFilter(v){S.segFilter=v;document.querySelector('.content').innerHTML=renderList();attachEvents();}
 
 function onStatusChange(val){
-  const el=document.getElementById('parcSection');
-  if(el)el.style.display=val.includes('Parcelado')?'':'none';
+  const ps=document.getElementById('parcSection');
+  const es=document.getElementById('entradaSection');
+  if(ps) ps.style.display=val.includes('Parcelado')?'':'none';
+  if(es) es.style.display=val==='Entrada + Parcelado'?'':'none';
 }
 
 function onValorChange(){
@@ -764,7 +789,7 @@ function onParcelasChange(){
 
 function readForm(){
   const g=id=>document.getElementById(id)?.value||'';
-  return{data:g('f_data'),descricao:g('f_descricao'),fornecedor:g('f_fornecedor'),segmento:g('f_segmento'),centro:g('f_centro'),forma:g('f_forma'),status:g('f_status'),valorTotal:g('f_valorTotal'),totalParcelas:g('f_totalParcelas'),parcelasPagas:g('f_parcelasPagas'),valorParcela:g('f_valorParcela'),dataPrimeiraParcela:g('f_dataPrimeiraParcela'),obs:g('f_obs'),cartaoNome:g('f_cartaoNome'),cartaoNumero:g('f_cartaoNumero'),cartaoBandeira:g('f_cartaoBandeira'),cartaoVencimento:g('f_cartaoVencimento')};
+  return{data:g('f_data'),descricao:g('f_descricao'),fornecedor:g('f_fornecedor'),segmento:g('f_segmento'),centro:g('f_centro'),forma:g('f_forma'),status:g('f_status'),valorTotal:g('f_valorTotal'),totalParcelas:g('f_totalParcelas'),parcelasPagas:g('f_parcelasPagas'),valorParcela:g('f_valorParcela'),dataPrimeiraParcela:g('f_dataPrimeiraParcela'),obs:g('f_obs'),cartaoNome:g('f_cartaoNome'),cartaoNumero:g('f_cartaoNumero'),cartaoBandeira:g('f_cartaoBandeira'),cartaoVencimento:g('f_cartaoVencimento'),entradaValor:g('f_entradaValor'),entradaForma:g('f_entradaForma'),entradaData:g('f_entradaData')};
 }
 
 async function handleSave(){
@@ -777,8 +802,9 @@ async function handleSave(){
   const tp=parseInt(f.totalParcelas)||1;
   const pp=Math.min(parseInt(f.parcelasPagas)||0,tp);
   const vp=parseFloat(f.valorParcela)||vt;
-  const totalPago=f.status==='Pago à Vista'||f.status==='Parcelado Quitado'?vt:f.status==='Parcelado em Andamento'?pp*vp:0;
-  const tx={id:S.editId||uid(),data:f.data,descricao:f.descricao.trim(),fornecedor:f.fornecedor,segmento:f.segmento,centro:f.centro,forma:f.forma,valorTotal:vt,totalParcelas:tp,parcelasPagas:pp,valorParcela:vp,totalPago:Math.min(totalPago,vt),status:f.status,dataPrimeiraParcela:f.dataPrimeiraParcela,obs:f.obs,cartaoNome:f.cartaoNome,cartaoNumero:f.cartaoNumero,cartaoBandeira:f.cartaoBandeira,cartaoVencimento:f.cartaoVencimento,createdAt:S.editId?(S.txs.find(t=>t.id===S.editId)?.createdAt||new Date().toISOString()):new Date().toISOString()};
+  const ev=parseFloat(f.entradaValor)||0;
+  const totalPago=f.status==='Pago à Vista'||f.status==='Parcelado Quitado'?vt:f.status==='Parcelado em Andamento'?pp*vp:f.status==='Entrada + Parcelado'?ev+(pp*vp):0;
+  const tx={id:S.editId||uid(),data:f.data,descricao:f.descricao.trim(),fornecedor:f.fornecedor,segmento:f.segmento,centro:f.centro,forma:f.forma,valorTotal:vt,totalParcelas:tp,parcelasPagas:pp,valorParcela:vp,totalPago:Math.min(totalPago,vt),status:f.status,dataPrimeiraParcela:f.dataPrimeiraParcela,obs:f.obs,cartaoNome:f.cartaoNome,cartaoNumero:f.cartaoNumero,cartaoBandeira:f.cartaoBandeira,cartaoVencimento:f.cartaoVencimento,entradaValor:parseFloat(f.entradaValor)||0,entradaForma:f.entradaForma,entradaData:f.entradaData,createdAt:S.editId?(S.txs.find(t=>t.id===S.editId)?.createdAt||new Date().toISOString()):new Date().toISOString()};
   try{
     await upsertTx(tx);
     showToast(S.editId?'✅ Atualizado!':'✅ Salvo!');
