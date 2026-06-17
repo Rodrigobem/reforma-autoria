@@ -10,7 +10,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
 
   <!-- Dependencies via CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <style>
@@ -322,16 +322,16 @@ function initDB() {
 
 async function loadAll() {
   try {
-    const [txRes, orcRes] = await Promise.all([
-      db.from('reforma_transacoes').select('*').order('created_at', {ascending:false}),
-      db.from('reforma_config').select('valor').eq('chave','orcamento').maybeSingle()
-    ]);
+    const txRes = await db.from('reforma_transacoes').select('*').order('created_at', {ascending:false});
+    console.log('TX response:', JSON.stringify(txRes));
     if (txRes.error) throw txRes.error;
     S.txs = (txRes.data||[]).map(rowToTx);
+
+    const orcRes = await db.from('reforma_config').select('valor').eq('chave','orcamento').maybeSingle();
     S.orc = parseFloat(orcRes.data?.valor)||0;
   } catch(e) {
-    showToast('⚠️ Erro ao conectar. Verifique a configuração.','err');
-    console.error(e);
+    console.error('Erro Supabase:', e);
+    showToast('⚠️ Erro: ' + (e.message||e), 'err');
   }
   S.loading = false;
   render();
