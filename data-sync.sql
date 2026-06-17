@@ -8,6 +8,6 @@ insert into reforma_transacoes (
   'Thiago Ramos', 'Esquadrias / Vidros', 'Banheiro Social',
   'Cartão de Crédito', 2331.10, 1, 233.11, 233.11,
   'Parcelado em Andamento',
-  '10x R$ 233,11. 1ª parcela paga. Saldo: 9x R$ 233,11. Inclui material elétrico.',
+  '10x R$ 233,11. 1a parcela paga. Saldo: 9x R$ 233,11. Inclui material eletrico.',
   '2026-06-17T00:00:00Z'
 ) on conflict (id) do nothing;
