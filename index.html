@@ -543,7 +543,20 @@ function renderHeader(k) {
       <div class="header-row">
         <div>
           <div class="header-eyebrow">Controle Financeiro</div>
-          <div class="header-title">🏠 Reforma Autoria</div>
+          ${S.editandoNome
+            ? `<div style="display:flex;gap:6px;align-items:center;margin-top:2px">
+                <input id="nomeInput" value="${esc(S.nomeProjeto)}"
+                  style="background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.6);
+                  border-radius:8px;padding:5px 10px;color:#fff;font-size:15px;font-weight:700;
+                  font-family:inherit;outline:none;width:200px"
+                  onkeydown="if(event.key==='Enter')salvarNome()">
+                <button onclick="salvarNome()" style="background:rgba(255,255,255,.25);border:none;
+                  border-radius:8px;padding:5px 12px;color:#fff;font-weight:700;cursor:pointer;font-size:13px">OK</button>
+              </div>`
+            : `<div class="header-title" onclick="S.editandoNome=true;render()" style="cursor:pointer">
+                🏠 ${esc(S.nomeProjeto)} <span style="font-size:12px;opacity:.7">✏️</span>
+              </div>`
+          }
         </div>
         <div style="text-align:right">
           <div class="header-eyebrow">Total Pago</div>
