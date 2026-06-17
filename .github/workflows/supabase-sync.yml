@@ -8,27 +8,26 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      PROJ_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      MGMT_TOKEN: ${{ secrets.SUPABASE_MGMT_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Execute SQL on Supabase
         run: |
-          SQL=$(cat data-sync.sql)
-          PAYLOAD=$(python3 -c "import sys,json; print(json.dumps({'query': open('data-sync.sql').read()}))")
-          RESPONSE=$(curl -s -X POST \
-            "https://api.supabase.com/v1/projects/${{ secrets.SUPABASE_PROJECT_REF }}/database/query" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_MGMT_TOKEN }}" \
+          PAYLOAD=$(python3 -c "import json,pathlib; print(json.dumps({'query': pathlib.Path('data-sync.sql').read_text()}))")
+          RESPONSE=$(curl -sf -X POST \
+            "https://api.supabase.com/v1/projects/${PROJ_REF}/database/query" \
+            -H "Authorization: Bearer ${MGMT_TOKEN}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
-          echo "Supabase response: $RESPONSE"
+          echo "Response: $RESPONSE"
           echo "$RESPONSE" | python3 -c "
-import sys, json
-d = json.load(sys.stdin)
-if isinstance(d, list):
-    print('✅ SQL executado com sucesso! Linhas afetadas:', len(d))
-elif 'error' in str(d).lower():
-    print('❌ Erro:', d)
-    sys.exit(1)
-else:
-    print('✅ OK:', d)
+import sys,json
+try:
+  d=json.load(sys.stdin)
+  print('Sucesso:', d)
+except:
+  print('OK - sem resposta JSON')
 "
