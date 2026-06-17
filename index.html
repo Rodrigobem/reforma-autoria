@@ -5,1144 +5,822 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#1A365D">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>🏠 Reforma Autoria</title>
+  <title>🏠 Reforma Authoria</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
-
-  <!-- Dependencies via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #F0F4F8;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    #app {
-      max-width: 540px;
-      margin: 0 auto;
-      min-height: 100vh;
-      position: relative;
-    }
-
-    /* ── Animations ─────────────────────────────────────── */
-    @keyframes spin    { to { transform: rotate(360deg); } }
-    @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
-    @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
-
-    .spin     { animation: spin .7s linear infinite; }
-    .slide-up { animation: slideUp .25s ease; }
-    .fade-in  { animation: fadeIn .3s ease; }
-
-    /* ── Loading ────────────────────────────────────────── */
-    .loading-screen {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      height: 100vh; gap: 14px;
-    }
-    .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid #BEE3F8;
-      border-top-color: #2B6CB0;
-      border-radius: 50%;
-    }
-
-    /* ── Header ─────────────────────────────────────────── */
-    .header {
-      background: linear-gradient(135deg, #1A365D 0%, #2B6CB0 100%);
-      padding: 18px 16px 14px;
-      color: #fff;
-      position: sticky; top: 0; z-index: 100;
-      box-shadow: 0 2px 12px rgba(0,0,0,.2);
-    }
-    .header-row {
-      display: flex; justify-content: space-between; align-items: flex-start;
-    }
-    .header-eyebrow {
-      font-size: 10px; opacity:.65; letter-spacing:.12em;
-      text-transform:uppercase; font-weight:700;
-    }
-    .header-title { font-size:17px; font-weight:800; letter-spacing:-.02em; margin-top:1px; }
-    .header-amount { font-size:21px; font-weight:900; letter-spacing:-.03em; }
-    .progress-wrap { margin-top:10px; }
-    .progress-labels {
-      display:flex; justify-content:space-between;
-      font-size:10px; opacity:.75; margin-bottom:4px; font-weight:600;
-    }
-    .progress-track { background:rgba(255,255,255,.2); border-radius:99px; height:5px; }
-    .progress-fill  { height:5px; border-radius:99px; transition:width .6s ease; }
-
-    /* ── Content ────────────────────────────────────────── */
-    .content { padding:14px; padding-bottom:88px; }
-
-    /* ── Cards ──────────────────────────────────────────── */
-    .card {
-      background:#fff; border-radius:14px; padding:16px;
-      box-shadow:0 1px 4px rgba(0,0,0,.07); margin-bottom:12px;
-    }
-
-    /* ── KPI grid ───────────────────────────────────────── */
-    .kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
-    .kpi {
-      background:#fff; border-radius:14px; padding:14px;
-      box-shadow:0 1px 4px rgba(0,0,0,.07);
-    }
-    .kpi-icon  { font-size:20px; margin-bottom:5px; }
-    .kpi-val   { font-size:17px; font-weight:900; letter-spacing:-.02em; }
-    .kpi-label { font-size:11px; color:#718096; margin-top:3px; font-weight:600; }
-
-    /* ── Pills ──────────────────────────────────────────── */
-    .pill {
-      display:inline-block; font-size:10px; font-weight:700;
-      padding:3px 9px; border-radius:99px; white-space:nowrap;
-    }
-    .pills-row { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; }
-
-    /* ── Form ───────────────────────────────────────────── */
-    .field { margin-bottom:14px; }
-    .field-label {
-      display:block; font-size:10px; font-weight:700; color:#718096;
-      text-transform:uppercase; letter-spacing:.08em; margin-bottom:5px;
-    }
-    .input {
-      width:100%; padding:11px 13px;
-      border:1.5px solid #E2E8F0; border-radius:9px;
-      font-size:14px; font-family:inherit;
-      background:#FAFAFA; outline:none; color:#1A202C;
-      transition:border-color .15s, box-shadow .15s;
-      -webkit-appearance: none;
-    }
-    .input:focus { border-color:#2B6CB0; box-shadow:0 0 0 3px #BEE3F8; }
-    textarea.input { resize:none; }
-    .input-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-
-    /* ── Buttons ────────────────────────────────────────── */
-    .btn {
-      padding:13px 18px; border:none; border-radius:12px;
-      font-size:14px; font-weight:700; cursor:pointer;
-      font-family:inherit; transition:opacity .15s; display:inline-block;
-    }
-    .btn:active { opacity:.85; }
-    .btn-primary {
-      background:linear-gradient(135deg,#1A365D,#2B6CB0);
-      color:#fff; box-shadow:0 4px 14px rgba(43,108,176,.3);
-    }
-    .btn-secondary { background:#fff; color:#718096; border:1.5px solid #E2E8F0; }
-    .btn-danger    { background:#FFF5F5; color:#C53030; border:1.5px solid #FED7D7; }
-    .btn-sm        { padding:8px 14px; font-size:12px; border-radius:9px; }
-    .btn-row       { display:flex; gap:10px; margin-top:14px; }
-
-    /* ── Transaction Card ───────────────────────────────── */
-    .tx-card {
-      background:#fff; border-radius:14px; padding:14px;
-      box-shadow:0 1px 4px rgba(0,0,0,.07);
-      margin-bottom:10px; animation:slideUp .2s ease;
-    }
-    .tx-header { display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
-    .tx-desc   { font-size:13px; font-weight:700; color:#1A202C; line-height:1.35; }
-    .tx-supplier { font-size:11px; color:#718096; margin-top:3px; }
-    .tx-amount { font-size:16px; font-weight:900; color:#1A365D; text-align:right; flex-shrink:0; }
-    .tx-paid   { font-size:10px; color:#B7791F; font-weight:600; }
-    .tx-obs    {
-      font-size:11px; color:#A0AEC0; margin-top:8px; line-height:1.45;
-      border-top:1px solid #F7FAFC; padding-top:8px;
-    }
-    .tx-actions { display:flex; gap:8px; margin-top:10px; }
-
-    /* ── PDF Drop Zone ──────────────────────────────────── */
-    .pdf-drop {
-      border:2px dashed #CBD5E0; border-radius:14px;
-      padding:28px; text-align:center; cursor:pointer;
-      background:#FAFAFA; transition:all .25s; margin-bottom:12px;
-    }
-    .pdf-drop:hover, .pdf-drop.over { border-color:#2B6CB0; background:#EBF8FF; }
-    .pdf-drop.loading { border-color:#2B6CB0; background:#EBF8FF; pointer-events:none; }
-    .pdf-ai-badge {
-      margin-top:12px; font-size:11px; background:#BEE3F8; color:#2C5282;
-      padding:5px 14px; border-radius:99px; display:inline-block; font-weight:700;
-    }
-
-    /* ── Nav ────────────────────────────────────────────── */
-    .nav {
-      position:fixed; bottom:0; left:50%; transform:translateX(-50%);
-      width:100%; max-width:540px; background:#fff;
-      border-top:1px solid #E2E8F0; display:flex; align-items:center;
-      padding-bottom:env(safe-area-inset-bottom,0px);
-      box-shadow:0 -4px 16px rgba(0,0,0,.07); z-index:100;
-    }
-    .nav-btn {
-      flex:1; padding:10px 0 8px; border:none; background:none;
-      cursor:pointer; display:flex; flex-direction:column;
-      align-items:center; gap:2px;
-    }
-    .nav-btn-icon  { font-size:22px; line-height:1; }
-    .nav-btn-label { font-size:10px; letter-spacing:.01em; }
-    .nav-indicator { width:20px; height:2px; background:#2B6CB0; border-radius:99px; margin-top:1px; }
-    .nav-add-wrap  {
-      width:46px; height:46px;
-      background:linear-gradient(135deg,#1A365D,#2B6CB0);
-      border-radius:50%; display:flex; align-items:center; justify-content:center;
-      margin-top:-22px; box-shadow:0 4px 16px rgba(43,108,176,.45);
-    }
-    .nav-add-icon  { font-size:28px; color:#fff; font-weight:300; line-height:1; }
-
-    /* ── Toast ──────────────────────────────────────────── */
-    .toast {
-      position:fixed; top:16px; left:50%; transform:translateX(-50%);
-      padding:10px 22px; border-radius:24px; font-size:13px; font-weight:700;
-      z-index:9999; white-space:nowrap;
-      box-shadow:0 4px 16px rgba(0,0,0,.2); animation:slideUp .25s ease;
-    }
-
-    /* ── Misc ───────────────────────────────────────────── */
-    .section-title  { font-size:13px; font-weight:800; color:#1A365D; margin-bottom:14px; }
-    .search-bar     { display:flex; gap:8px; margin-bottom:10px; }
-    .filter-sel     { padding:11px 8px !important; max-width:130px; width:auto; }
-    .total-bar      {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:11px 16px; background:#fff; border-radius:12px;
-      margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,.07);
-    }
-    .edit-banner    {
-      background:#FEFCBF; border:1.5px solid #F6E05E; border-radius:10px;
-      padding:10px 14px; font-size:13px; color:#744210;
-      font-weight:700; margin-bottom:12px;
-    }
-    .empty {
-      text-align:center; padding:48px 20px; color:#A0AEC0;
-    }
-    .empty-icon  { font-size:52px; margin-bottom:12px; }
-    .empty-title { font-weight:700; font-size:15px; }
-    .empty-sub   { font-size:12px; margin-top:4px; }
-
-    /* ── Chart container ────────────────────────────────── */
-    .chart-wrap { position:relative; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#F0F4F8;min-height:100vh;-webkit-font-smoothing:antialiased}
+    #app{max-width:540px;margin:0 auto;min-height:100vh;position:relative}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .spin{animation:spin .7s linear infinite}
+    .slide-up{animation:slideUp .25s ease}
+    .fade-in{animation:fadeIn .3s ease}
+    .loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:14px}
+    .spinner{width:40px;height:40px;border:3px solid #BEE3F8;border-top-color:#2B6CB0;border-radius:50%}
+    .header{background:linear-gradient(135deg,#1A365D 0%,#2B6CB0 100%);padding:18px 16px 14px;color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+    .header-row{display:flex;justify-content:space-between;align-items:flex-start}
+    .header-eyebrow{font-size:10px;opacity:.65;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+    .header-title{font-size:17px;font-weight:800;letter-spacing:-.02em;margin-top:1px;cursor:pointer}
+    .header-amount{font-size:21px;font-weight:900;letter-spacing:-.03em}
+    .progress-wrap{margin-top:10px}
+    .progress-labels{display:flex;justify-content:space-between;font-size:10px;opacity:.75;margin-bottom:4px;font-weight:600}
+    .progress-track{background:rgba(255,255,255,.2);border-radius:99px;height:5px}
+    .progress-fill{height:5px;border-radius:99px;transition:width .6s ease}
+    .content{padding:14px;padding-bottom:88px}
+    .card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:12px}
+    .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .kpi{background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+    .kpi-icon{font-size:20px;margin-bottom:5px}
+    .kpi-val{font-size:17px;font-weight:900;letter-spacing:-.02em}
+    .kpi-label{font-size:11px;color:#718096;margin-top:3px;font-weight:600}
+    .pill{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+    .pills-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+    .field{margin-bottom:14px}
+    .field-label{display:block;font-size:10px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+    .input{width:100%;padding:11px 13px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:14px;font-family:inherit;background:#FAFAFA;outline:none;color:#1A202C;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none}
+    .input:focus{border-color:#2B6CB0;box-shadow:0 0 0 3px #BEE3F8}
+    textarea.input{resize:none}
+    .input-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .btn{padding:13px 18px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s;display:inline-block}
+    .btn:active{opacity:.85}
+    .btn-primary{background:linear-gradient(135deg,#1A365D,#2B6CB0);color:#fff;box-shadow:0 4px 14px rgba(43,108,176,.3)}
+    .btn-secondary{background:#fff;color:#718096;border:1.5px solid #E2E8F0}
+    .btn-danger{background:#FFF5F5;color:#C53030;border:1.5px solid #FED7D7}
+    .btn-success{background:#F0FFF4;color:#276749;border:1.5px solid #C6F6D5}
+    .btn-sm{padding:8px 14px;font-size:12px;border-radius:9px}
+    .btn-row{display:flex;gap:10px;margin-top:14px}
+    .tx-card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:10px;animation:slideUp .2s ease}
+    .tx-header{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+    .tx-desc{font-size:13px;font-weight:700;color:#1A202C;line-height:1.35}
+    .tx-supplier{font-size:11px;color:#718096;margin-top:3px}
+    .tx-amount{font-size:16px;font-weight:900;color:#1A365D;text-align:right;flex-shrink:0}
+    .tx-paid{font-size:10px;color:#B7791F;font-weight:600}
+    .tx-obs{font-size:11px;color:#A0AEC0;margin-top:8px;line-height:1.45;border-top:1px solid #F7FAFC;padding-top:8px}
+    .tx-actions{display:flex;gap:8px;margin-top:10px}
+    .pdf-drop{border:2px dashed #CBD5E0;border-radius:14px;padding:28px;text-align:center;cursor:pointer;background:#FAFAFA;transition:all .25s;margin-bottom:12px}
+    .pdf-drop:hover{border-color:#2B6CB0;background:#EBF8FF}
+    .pdf-drop.loading{border-color:#2B6CB0;background:#EBF8FF;pointer-events:none}
+    .pdf-ai-badge{margin-top:12px;font-size:11px;background:#BEE3F8;color:#2C5282;padding:5px 14px;border-radius:99px;display:inline-block;font-weight:700}
+    .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:540px;background:#fff;border-top:1px solid #E2E8F0;display:flex;align-items:center;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -4px 16px rgba(0,0,0,.07);z-index:100}
+    .nav-btn{flex:1;padding:10px 0 8px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+    .nav-btn-icon{font-size:20px;line-height:1}
+    .nav-btn-label{font-size:9px;letter-spacing:.01em}
+    .nav-indicator{width:20px;height:2px;background:#2B6CB0;border-radius:99px;margin-top:1px}
+    .nav-add-wrap{width:44px;height:44px;background:linear-gradient(135deg,#1A365D,#2B6CB0);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:-20px;box-shadow:0 4px 16px rgba(43,108,176,.45)}
+    .nav-add-icon{font-size:26px;color:#fff;font-weight:300;line-height:1}
+    .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:24px;font-size:13px;font-weight:700;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:slideUp .25s ease}
+    .section-title{font-size:13px;font-weight:800;color:#1A365D;margin-bottom:14px}
+    .search-bar{display:flex;gap:8px;margin-bottom:10px}
+    .filter-sel{padding:11px 8px!important;max-width:130px;width:auto}
+    .total-bar{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:#fff;border-radius:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+    .edit-banner{background:#FEFCBF;border:1.5px solid #F6E05E;border-radius:10px;padding:10px 14px;font-size:13px;color:#744210;font-weight:700;margin-bottom:12px}
+    .empty{text-align:center;padding:48px 20px;color:#A0AEC0}
+    .empty-icon{font-size:52px;margin-bottom:12px}
+    .empty-title{font-weight:700;font-size:15px}
+    .empty-sub{font-size:12px;margin-top:4px}
+    /* Fluxo tab */
+    .mes-nav{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:14px;padding:12px 16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+    .mes-nav-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 10px;border-radius:8px;color:#2B6CB0}
+    .mes-nav-btn:hover{background:#EBF8FF}
+    .mes-title{font-size:15px;font-weight:800;color:#1A365D}
+    .parc-card{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;align-items:center;gap:12px}
+    .parc-day{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
+    .parc-info{flex:1;min-width:0}
+    .parc-desc{font-size:12px;font-weight:700;color:#1A202C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .parc-sub{font-size:10px;color:#718096;margin-top:2px}
+    .parc-valor{font-size:14px;font-weight:900;color:#1A365D;flex-shrink:0;text-align:right}
+    .parc-btn{border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+    .flow-month-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #F0F4F8}
+    .flow-month-label{font-size:13px;font-weight:700;color:#1A365D}
+    .flow-month-values{text-align:right}
+    .flow-month-total{font-size:14px;font-weight:800;color:#1A365D}
+    .flow-month-detail{font-size:10px;color:#718096;margin-top:1px}
   </style>
 </head>
 <body>
-
 <div id="app">
   <div class="loading-screen">
     <div class="spinner spin"></div>
     <p style="color:#2B6CB0;font-weight:700;font-size:15px">Carregando reforma…</p>
   </div>
 </div>
-
-<!-- Hidden file input for PDF upload -->
-<input type="file" id="pdfInput" accept="application/pdf"
-  style="display:none" onchange="handlePdfFile(this.files[0]);this.value=''">
+<input type="file" id="pdfInput" accept="application/pdf" style="display:none" onchange="handlePdfFile(this.files[0]);this.value=''">
 
 <script>
-/* ══════════════════════════════════════════════════════════════
-   ⚙️  CONFIGURAÇÃO — preencha com seus dados do Supabase
-   ══════════════════════════════════════════════════════════════ */
 const SUPABASE_URL = 'https://jmqwxbfllvaizuydpeim.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_3ATrJc5dTkijTW-iSRL5Qw_7l1-NIj1';
 
-/* ══════════════════════════════════════════════════════════════
-   CONSTANTES
-   ══════════════════════════════════════════════════════════════ */
-const SEGMENTOS = [
-  'Alvenaria / Estrutura','Elétrica','Hidráulica','Gás',
-  'Piso e Revestimento','Pintura','Marcenaria / Móveis Planejados',
-  'Esquadrias / Vidros','Forro / Gesso','Eletrodomésticos','Mobiliário',
-  'Iluminação / Lustres','Ar-Condicionado / Climatização',
-  'Limpeza / Dedetização','Paisagismo / Jardinagem',
-  'Decoração e Acabamentos','Mão de Obra Geral','Projeto / Arquitetura',
-  'Taxas e Documentos','Outros'
-];
-const CENTROS = [
-  'Sala de Estar','Sala de Jantar','Cozinha','Área de Serviço',
-  'Quarto Principal','Quarto 2','Quarto 3',
-  'Banheiro Principal','Banheiro Social','Lavabo',
-  'Varanda / Terraço','Garagem','Área Gourmet',
-  'Fachada / Área Externa','Geral / Toda a Casa'
-];
-const FORMAS     = ['Pix','Cartão de Crédito','Cartão de Débito','Boleto','Transferência','Dinheiro','Cheque'];
+const SEGMENTOS = ['Alvenaria / Estrutura','Elétrica','Hidráulica','Gás','Piso e Revestimento','Pintura','Marcenaria / Móveis Planejados','Esquadrias / Vidros','Forro / Gesso','Eletrodomésticos','Mobiliário','Iluminação / Lustres','Ar-Condicionado / Climatização','Limpeza / Dedetização','Paisagismo / Jardinagem','Decoração e Acabamentos','Mão de Obra Geral','Projeto / Arquitetura','Taxas e Documentos','Outros'];
+const CENTROS = ['Sala de Estar','Sala de Jantar','Cozinha','Área de Serviço','Quarto Principal','Quarto 2','Quarto 3','Banheiro Principal','Banheiro Social','Lavabo','Varanda / Terraço','Garagem','Área Gourmet','Fachada / Área Externa','Geral / Toda a Casa'];
+const FORMAS = ['Pix','Cartão de Crédito','Cartão de Débito','Boleto','Transferência','Dinheiro','Cheque'];
 const STATUS_OPT = ['Pago à Vista','Parcelado em Andamento','Parcelado Quitado','Pendente','Cancelado'];
-
+const CHART_COLORS = ['#2B6CB0','#2F855A','#B7791F','#9B2C2C','#6B46C1','#0987A0','#276749','#C05621'];
 const STATUS_STYLE = {
-  'Pago à Vista':           { bg:'#C6F6D5', c:'#22543D' },
-  'Parcelado em Andamento': { bg:'#FEFCBF', c:'#744210' },
-  'Parcelado Quitado':      { bg:'#BEE3F8', c:'#2A4365' },
-  'Pendente':               { bg:'#FED7D7', c:'#742A2A' },
-  'Cancelado':              { bg:'#EDF2F7', c:'#4A5568' },
+  'Pago à Vista':{bg:'#C6F6D5',c:'#22543D'},
+  'Parcelado em Andamento':{bg:'#FEFCBF',c:'#744210'},
+  'Parcelado Quitado':{bg:'#BEE3F8',c:'#2A4365'},
+  'Pendente':{bg:'#FED7D7',c:'#742A2A'},
+  'Cancelado':{bg:'#EDF2F7',c:'#4A5568'},
 };
 
-const COLORS = ['#2B6CB0','#2F855A','#B7791F','#9B2C2C','#6B46C1','#0987A0','#276749','#C05621'];
-
-/* ══════════════════════════════════════════════════════════════
-   UTILITÁRIOS
-   ══════════════════════════════════════════════════════════════ */
-const fmt   = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
+const fmt = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
 const today = () => new Date().toLocaleDateString('pt-BR');
-const uid   = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
-const esc   = s => String(s||'')
-  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const parseDate = str => { if(!str)return null; const[d,m,y]=str.split('/').map(Number); return new Date(y,m-1,d); };
+const fmtMes = (y,m) => new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-/* ══════════════════════════════════════════════════════════════
-   ESTADO
-   ══════════════════════════════════════════════════════════════ */
 let S = {
-  txs:       [],
-  orc:       0,
-  tab:       'dash',
-  nomeProjeto: 'Reforma Authoria',
-  editandoNome: false,         // 'dash' | 'list' | 'form' | 'settings'
-  editId:    null,
-  form:      emptyForm(),
-  search:    '',
-  segFilter: '',
-  loading:   true,
-  extracting:false,
-  saving:    false,
-  orcEdit:   false,
+  txs:[], orc:0, tab:'dash',
+  editId:null, form:emptyForm(),
+  search:'', segFilter:'',
+  loading:true, extracting:false, saving:false,
+  orcEdit:false, nomeProjeto:'Reforma Authoria', editandoNome:false,
+  fluxoAno: new Date().getFullYear(), fluxoMes: new Date().getMonth()+1,
 };
 
-function emptyForm() {
-  return {
-    data:'', descricao:'', fornecedor:'',
-    segmento:'', centro:'', forma:'Pix',
-    valorTotal:'', parcelas:'1', valorParcela:'',
-    status:'Pago à Vista', obs:''
-  };
+function emptyForm(){
+  return {data:today(),descricao:'',fornecedor:'',segmento:'',centro:'',forma:'Pix',
+    valorTotal:'',totalParcelas:'1',parcelasPagas:'1',valorParcela:'',
+    dataPrimeiraParcela:'',status:'Pago à Vista',obs:''};
 }
 
-/* ══════════════════════════════════════════════════════════════
-   API REST SUPABASE (fetch direto — compatível com qualquer chave)
-   ══════════════════════════════════════════════════════════════ */
-const H = () => ({
-  'apikey': SUPABASE_KEY,
-  'Authorization': `Bearer ${SUPABASE_KEY}`,
-  'Content-Type': 'application/json',
-  'Prefer': 'return=representation'
-});
+// ── REST API ──────────────────────────────────────────────────────
+const H = () => ({'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'});
 
-function initDB() {} // não precisa mais
+function initDB(){}
 
 async function sbFetch(path, options={}) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    ...options,
-    headers: { ...H(), ...(options.headers||{}) }
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Supabase ${res.status}: ${err}`);
-  }
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {...options, headers:{...H(),...(options.headers||{})}});
+  if(!res.ok){const err=await res.text();throw new Error(`${res.status}: ${err}`);}
   const text = await res.text();
   return text ? JSON.parse(text) : null;
 }
 
-async function loadAll() {
+async function loadAll(){
   try {
-    const [txData, orcData] = await Promise.all([
+    const[txData, orcData, nomeData] = await Promise.all([
       sbFetch('reforma_transacoes?select=*&order=created_at.desc'),
-      sbFetch('reforma_config?select=valor&chave=eq.orcamento')
+      sbFetch('reforma_config?select=valor&chave=eq.orcamento'),
+      sbFetch('reforma_config?select=valor&chave=eq.nome_projeto'),
     ]);
     S.txs = (txData||[]).map(rowToTx);
     S.orc = parseFloat(orcData?.[0]?.valor)||0;
-  } catch(e) {
-    console.error('Erro:', e);
-    showToast('⚠️ Erro ao carregar: ' + e.message, 'err');
+    if(nomeData?.[0]?.valor) S.nomeProjeto = nomeData[0].valor;
+  } catch(e){
+    console.error(e);
+    showToast('⚠️ Erro ao carregar: '+e.message,'err');
   }
-  S.loading = false;
-  render();
+  S.loading=false; render();
 }
 
-function rowToTx(row) {
+function rowToTx(row){
   return {
-    id:           row.id,
-    data:         row.data || '',
-    descricao:    row.descricao || '',
-    fornecedor:   row.fornecedor || '',
-    segmento:     row.segmento || '',
-    centro:       row.centro || '',
-    forma:        row.forma || '',
-    valorTotal:   parseFloat(row.valor_total)||0,
-    parcelas:     parseInt(row.parcelas)||1,
-    valorParcela: parseFloat(row.valor_parcela)||0,
-    totalPago:    parseFloat(row.total_pago)||0,
-    status:       row.status || 'Pago à Vista',
-    obs:          row.obs || '',
-    createdAt:    row.created_at,
+    id:row.id, data:row.data||'', descricao:row.descricao||'',
+    fornecedor:row.fornecedor||'', segmento:row.segmento||'',
+    centro:row.centro||'', forma:row.forma||'',
+    valorTotal:parseFloat(row.valor_total)||0,
+    totalParcelas:parseInt(row.total_parcelas)||parseInt(row.parcelas)||1,
+    parcelasPagas:parseInt(row.parcelas)||1,
+    valorParcela:parseFloat(row.valor_parcela)||0,
+    totalPago:parseFloat(row.total_pago)||0,
+    status:row.status||'Pago à Vista',
+    dataPrimeiraParcela:row.data_primeira_parcela||'',
+    obs:row.obs||'', createdAt:row.created_at,
   };
 }
 
-function txToRow(tx) {
+function txToRow(tx){
   return {
-    id: tx.id, data: tx.data, descricao: tx.descricao, fornecedor: tx.fornecedor,
-    segmento: tx.segmento, centro: tx.centro, forma: tx.forma,
-    valor_total: tx.valorTotal, parcelas: tx.parcelas, valor_parcela: tx.valorParcela,
-    total_pago: tx.totalPago, status: tx.status, obs: tx.obs,
-    created_at: tx.createdAt || new Date().toISOString()
+    id:tx.id, data:tx.data, descricao:tx.descricao, fornecedor:tx.fornecedor,
+    segmento:tx.segmento, centro:tx.centro, forma:tx.forma,
+    valor_total:tx.valorTotal, parcelas:tx.parcelasPagas,
+    total_parcelas:tx.totalParcelas, valor_parcela:tx.valorParcela,
+    total_pago:tx.totalPago, status:tx.status,
+    data_primeira_parcela:tx.dataPrimeiraParcela||null,
+    obs:tx.obs, created_at:tx.createdAt||new Date().toISOString()
   };
 }
 
-async function upsertTx(tx) {
-  const data = await sbFetch('reforma_transacoes', {
-    method: 'POST',
-    headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
-    body: JSON.stringify(txToRow(tx))
-  });
-  if (S.editId) S.txs = S.txs.map(t => t.id===tx.id ? tx : t);
-  else S.txs = [tx, ...S.txs];
+async function upsertTx(tx){
+  await sbFetch('reforma_transacoes',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(txToRow(tx))});
+  if(S.editId) S.txs=S.txs.map(t=>t.id===tx.id?tx:t);
+  else S.txs=[tx,...S.txs];
 }
 
-async function deleteTxById(id) {
-  await sbFetch(`reforma_transacoes?id=eq.${id}`, { method: 'DELETE' });
-  S.txs = S.txs.filter(t => t.id!==id);
+async function deleteTxById(id){
+  await sbFetch(`reforma_transacoes?id=eq.${id}`,{method:'DELETE'});
+  S.txs=S.txs.filter(t=>t.id!==id);
 }
 
-async function persistOrc(v) {
-  await sbFetch('reforma_config', {
-    method: 'POST',
-    headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify({ chave: 'orcamento', valor: String(v) })
-  });
-  S.orc = v;
+async function persistOrc(v){
+  await sbFetch('reforma_config',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({chave:'orcamento',valor:String(v)})});
+  S.orc=v;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   TOAST
-   ══════════════════════════════════════════════════════════════ */
-let toastTimer;
-function showToast(msg, type='ok') {
-  document.querySelectorAll('.toast').forEach(el=>el.remove());
-  clearTimeout(toastTimer);
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.textContent = msg;
-  el.style.cssText = `background:${type==='err'?'#C53030':'#22543D'};color:#fff`;
-  document.body.appendChild(el);
-  toastTimer = setTimeout(() => el.remove(), 3200);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   COMPUTED
-   ══════════════════════════════════════════════════════════════ */
-function kpis() {
-  const totalPago = S.txs.reduce((s,t) => {
-    if (t.status==='Pago à Vista'||t.status==='Parcelado Quitado') return s+t.valorTotal;
-    if (t.status==='Parcelado em Andamento') return s+t.totalPago;
-    return s;
-  }, 0);
-  const totalParc = S.txs.filter(t=>t.status==='Parcelado em Andamento')
-    .reduce((s,t) => s+Math.max(0,t.valorTotal-t.totalPago), 0);
-  const totalPend = S.txs.filter(t=>t.status==='Pendente')
-    .reduce((s,t) => s+t.valorTotal, 0);
-  const pct  = S.orc>0 ? Math.min(100,(totalPago/S.orc)*100) : 0;
-  return { totalPago, totalParc, totalPend, saldo:S.orc-totalPago, pct };
-}
-
-function chartData() {
-  const bySeg = SEGMENTOS.map(seg => ({
-    label: seg.split('/')[0].trim().slice(0,16),
-    full:  seg,
-    val:   S.txs.filter(t=>t.segmento===seg).reduce((s,t)=>s+t.valorTotal,0)
-  })).filter(d=>d.val>0).sort((a,b)=>b.val-a.val).slice(0,9);
-
-  const byAmb = CENTROS.map(c => ({
-    label: c.length>14 ? c.slice(0,14)+'…' : c,
-    val:   S.txs.filter(t=>t.centro===c).reduce((s,t)=>s+t.valorTotal,0)
-  })).filter(d=>d.val>0).sort((a,b)=>b.val-a.val);
-
-  return { bySeg, byAmb };
-}
-
-function filtered() {
-  return S.txs.filter(t => {
-    const hay = [t.descricao,t.fornecedor,t.segmento,t.centro,t.forma].join(' ').toLowerCase();
-    return (!S.search || hay.includes(S.search.toLowerCase()))
-        && (!S.segFilter || t.segmento===S.segFilter);
-  });
-}
-
-/* ══════════════════════════════════════════════════════════════
-   CHARTS
-   ══════════════════════════════════════════════════════════════ */
-let _charts = {};
-
-function destroyCharts() {
-  Object.values(_charts).forEach(c => { try { c.destroy(); } catch{} });
-  _charts = {};
-}
-
-function buildChart(id, data) {
-  const canvas = document.getElementById(id);
-  if (!canvas) return;
-  if (data.length===0) {
-    canvas.style.display='none';
-    const em = document.getElementById(id+'_empty');
-    if (em) em.style.display='block';
-    return;
-  }
-  _charts[id] = new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels: data.map(d=>d.label),
-      datasets: [{
-        data: data.map(d=>d.val),
-        backgroundColor: COLORS.slice(0,data.length).concat(COLORS).slice(0,data.length),
-        borderRadius: 6,
-        borderSkipped: false,
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      plugins: {
-        legend: { display:false },
-        tooltip: {
-          callbacks: {
-            label: ctx => fmt(ctx.raw),
-            title: ctx => data[ctx[0].dataIndex]?.full || ctx[0].label
-          }
-        }
-      },
-      scales: {
-        x: { display:false },
-        y: { grid:{display:false}, ticks:{ font:{size:11}, color:'#4A5568' } }
-      }
+// ── INSTALLMENTS ──────────────────────────────────────────────────
+function getAllInstallments(){
+  const all=[];
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  for(const tx of S.txs){
+    if(!tx.status.includes('Parcelado')) continue;
+    const total = tx.totalParcelas||1;
+    const pagas = tx.parcelasPagas||0;
+    if(!tx.dataPrimeiraParcela) continue;
+    const[d,m,y] = tx.dataPrimeiraParcela.split('/').map(Number);
+    for(let i=0;i<total;i++){
+      const dt = new Date(y, m-1+i, d);
+      const pago = i < pagas;
+      const atrasado = !pago && dt < hoje;
+      all.push({
+        id:`${tx.id}-p${i+1}`, txId:tx.id,
+        txDesc:tx.descricao, txFornecedor:tx.fornecedor,
+        numero:i+1, total, dataVenc:dt,
+        dataVencStr:dt.toLocaleDateString('pt-BR'),
+        valor:tx.valorParcela, pago, atrasado,
+      });
     }
+  }
+  return all.sort((a,b)=>a.dataVenc-b.dataVenc);
+}
+
+function getMonthlyFlow(){
+  const map={};
+  const add=(key,field,v)=>{ if(!map[key]) map[key]={paid:0,due:0,future:0}; map[key][field]+=v; };
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const keyOf=(y,m)=>`${y}-${String(m).padStart(2,'0')}`;
+
+  for(const tx of S.txs){
+    if(tx.status==='Pago à Vista'){
+      const dt=parseDate(tx.data); if(!dt)continue;
+      add(keyOf(dt.getFullYear(),dt.getMonth()+1),'paid',tx.valorTotal);
+    }
+  }
+  for(const p of getAllInstallments()){
+    const k=keyOf(p.dataVenc.getFullYear(),p.dataVenc.getMonth()+1);
+    if(p.pago) add(k,'paid',p.valor);
+    else if(p.atrasado) add(k,'due',p.valor);
+    else add(k,'future',p.valor);
+  }
+
+  return Object.entries(map).sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>{
+    const[y,m]=k.split('-').map(Number);
+    return{key:k,year:y,month:m,label:`${MESES[m-1]} ${y}`,...v,total:v.paid+v.due+v.future};
   });
 }
 
-function initCharts() {
-  destroyCharts();
-  const { bySeg, byAmb } = chartData();
-  buildChart('segChart', bySeg);
-  buildChart('ambChart', byAmb);
+// ── TOAST ─────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg,type='ok'){
+  document.querySelectorAll('.toast').forEach(e=>e.remove());
+  clearTimeout(toastTimer);
+  const el=document.createElement('div');
+  el.className='toast'; el.textContent=msg;
+  el.style.cssText=`background:${type==='err'?'#C53030':'#22543D'};color:#fff`;
+  document.body.appendChild(el);
+  toastTimer=setTimeout(()=>el.remove(),3200);
 }
 
-/* ══════════════════════════════════════════════════════════════
-   RENDER
-   ══════════════════════════════════════════════════════════════ */
-function render() {
-  const app = document.getElementById('app');
-  const k   = kpis();
+// ── COMPUTED ──────────────────────────────────────────────────────
+function kpis(){
+  const totalPago=S.txs.reduce((s,t)=>{
+    if(t.status==='Pago à Vista'||t.status==='Parcelado Quitado') return s+t.valorTotal;
+    if(t.status==='Parcelado em Andamento') return s+t.totalPago;
+    return s;
+  },0);
+  const totalParc=S.txs.filter(t=>t.status==='Parcelado em Andamento').reduce((s,t)=>s+Math.max(0,t.valorTotal-t.totalPago),0);
+  const totalPend=S.txs.filter(t=>t.status==='Pendente').reduce((s,t)=>s+t.valorTotal,0);
+  const pct=S.orc>0?Math.min(100,(totalPago/S.orc)*100):0;
 
-  app.innerHTML = renderHeader(k) + `<div class="content fade-in">` +
-    (S.tab==='dash'     ? renderDash(k)  :
-     S.tab==='list'     ? renderList()   :
-     S.tab==='form'     ? renderForm()   :
-                          renderSettings()) +
-    `</div>` + renderNav();
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const mesAtual=getAllInstallments().filter(p=>p.dataVenc.getMonth()===hoje.getMonth()&&p.dataVenc.getFullYear()===hoje.getFullYear());
+  const vceMes=mesAtual.filter(p=>!p.pago&&!p.atrasado).reduce((s,p)=>s+p.valor,0);
+  const atrasado=getAllInstallments().filter(p=>p.atrasado).reduce((s,p)=>s+p.valor,0);
 
-  if (S.tab==='dash') setTimeout(initCharts, 60);
+  return{totalPago,totalParc,totalPend,saldo:S.orc-totalPago,pct,vceMes,atrasado};
+}
+
+// ── CHARTS ────────────────────────────────────────────────────────
+let _charts={};
+function destroyCharts(){Object.values(_charts).forEach(c=>{try{c.destroy()}catch{}});_charts={};}
+
+function buildBarChart(id,data,labelField,valField){
+  const canvas=document.getElementById(id); if(!canvas)return;
+  if(!data.length){canvas.style.display='none';const em=document.getElementById(id+'_empty');if(em)em.style.display='block';return;}
+  _charts[id]=new Chart(canvas,{type:'bar',data:{
+    labels:data.map(d=>d[labelField]),
+    datasets:[{data:data.map(d=>d[valField]),backgroundColor:CHART_COLORS.slice(0,data.length).concat(CHART_COLORS).slice(0,data.length),borderRadius:6,borderSkipped:false}]
+  },options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},scales:{x:{display:false},y:{grid:{display:false},ticks:{font:{size:11},color:'#4A5568'}}}}});
+}
+
+function buildFlowChart(id,flowData){
+  const canvas=document.getElementById(id); if(!canvas)return;
+  if(!flowData.length)return;
+  _charts[id]=new Chart(canvas,{type:'bar',data:{
+    labels:flowData.map(d=>d.label),
+    datasets:[
+      {label:'Pago',data:flowData.map(d=>d.paid),backgroundColor:'#2F855A',borderRadius:4},
+      {label:'A vencer',data:flowData.map(d=>d.due+d.future),backgroundColor:'#F6AD55',borderRadius:4},
+    ]
+  },options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11}}},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},scales:{x:{stacked:true,ticks:{font:{size:10}}},y:{stacked:true,display:false}}}});
+}
+
+// ── RENDER ────────────────────────────────────────────────────────
+function render(){
+  const app=document.getElementById('app');
+  const k=kpis();
+  app.innerHTML=renderHeader(k)+`<div class="content fade-in">`+
+    (S.tab==='dash'?renderDash(k):
+     S.tab==='list'?renderList():
+     S.tab==='form'?renderForm():
+     S.tab==='fluxo'?renderFluxo():
+     renderSettings())+
+    `</div>`+renderNav();
+  if(S.tab==='dash') setTimeout(()=>{
+    const bySeg=getChartData().bySeg; const byAmb=getChartData().byAmb;
+    buildBarChart('segChart',bySeg,'name','val');
+    buildBarChart('ambChart',byAmb,'name','val');
+  },60);
+  if(S.tab==='fluxo') setTimeout(()=>buildFlowChart('flowChart',getMonthlyFlow()),60);
   attachEvents();
 }
 
-/* ─── Header ──────────────────────────────────────────────────── */
-function renderHeader(k) {
-  return `
-    <div class="header">
-      <div class="header-row">
-        <div>
-          <div class="header-eyebrow">Controle Financeiro</div>
-          ${S.editandoNome
-            ? `<div style="display:flex;gap:6px;align-items:center;margin-top:2px">
-                <input id="nomeInput" value="${esc(S.nomeProjeto)}"
-                  style="background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.6);
-                  border-radius:8px;padding:5px 10px;color:#fff;font-size:15px;font-weight:700;
-                  font-family:inherit;outline:none;width:200px"
-                  onkeydown="if(event.key==='Enter')salvarNome()">
-                <button onclick="salvarNome()" style="background:rgba(255,255,255,.25);border:none;
-                  border-radius:8px;padding:5px 12px;color:#fff;font-weight:700;cursor:pointer;font-size:13px">OK</button>
-              </div>`
-            : `<div class="header-title" onclick="S.editandoNome=true;render()" style="cursor:pointer">
-                🏠 ${esc(S.nomeProjeto)} <span style="font-size:12px;opacity:.7">✏️</span>
-              </div>`
-          }
-        </div>
-        <div style="text-align:right">
-          <div class="header-eyebrow">Total Pago</div>
-          <div class="header-amount">${fmt(k.totalPago)}</div>
-        </div>
+function getChartData(){
+  const bySeg=SEGMENTOS.map(seg=>({name:seg.split('/')[0].trim().slice(0,16),full:seg,val:S.txs.filter(t=>t.segmento===seg).reduce((s,t)=>s+t.valorTotal,0)})).filter(d=>d.val>0).sort((a,b)=>b.val-a.val).slice(0,9);
+  const byAmb=CENTROS.map(c=>({name:c.length>14?c.slice(0,14)+'…':c,val:S.txs.filter(t=>t.centro===c).reduce((s,t)=>s+t.valorTotal,0)})).filter(d=>d.val>0).sort((a,b)=>b.val-a.val);
+  return{bySeg,byAmb};
+}
+
+function filtered(){
+  return S.txs.filter(t=>{
+    const hay=[t.descricao,t.fornecedor,t.segmento,t.centro,t.forma].join(' ').toLowerCase();
+    return(!S.search||hay.includes(S.search.toLowerCase()))&&(!S.segFilter||t.segmento===S.segFilter);
+  });
+}
+
+// ── HEADER ────────────────────────────────────────────────────────
+function renderHeader(k){
+  return`<div class="header">
+    <div class="header-row">
+      <div>
+        <div class="header-eyebrow">Controle Financeiro</div>
+        ${S.editandoNome
+          ?`<div style="display:flex;gap:6px;align-items:center;margin-top:2px">
+              <input id="nomeInput" value="${esc(S.nomeProjeto)}" style="background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.6);border-radius:8px;padding:5px 10px;color:#fff;font-size:15px;font-weight:700;font-family:inherit;outline:none;width:200px" onkeydown="if(event.key==='Enter')salvarNome()">
+              <button onclick="salvarNome()" style="background:rgba(255,255,255,.25);border:none;border-radius:8px;padding:5px 12px;color:#fff;font-weight:700;cursor:pointer;font-size:13px">OK</button>
+            </div>`
+          :`<div class="header-title" onclick="S.editandoNome=true;render()">🏠 ${esc(S.nomeProjeto)} <span style="font-size:11px;opacity:.7">✏️</span></div>`}
       </div>
-      ${S.orc>0 ? `
-        <div class="progress-wrap">
-          <div class="progress-labels">
-            <span>${k.pct.toFixed(1)}% utilizado</span>
-            <span>Orçamento: ${fmt(S.orc)}</span>
-          </div>
-          <div class="progress-track">
-            <div class="progress-fill" style="width:${k.pct}%;background:${
-              k.pct>85?'#FC8181':k.pct>60?'#F6E05E':'#68D391'
-            }"></div>
-          </div>
-        </div>
-      ` : ''}
-    </div>`;
+      <div style="text-align:right">
+        <div class="header-eyebrow">Total Pago</div>
+        <div class="header-amount">${fmt(k.totalPago)}</div>
+      </div>
+    </div>
+    ${S.orc>0?`<div class="progress-wrap">
+      <div class="progress-labels"><span>${k.pct.toFixed(1)}% utilizado</span><span>Orçamento: ${fmt(S.orc)}</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${k.pct}%;background:${k.pct>85?'#FC8181':k.pct>60?'#F6E05E':'#68D391'}"></div></div>
+    </div>`:''}
+  </div>`;
 }
 
-/* ─── Nav ──────────────────────────────────────────────────────── */
-function renderNav() {
-  const navTab = (id, icon, label) => `
-    <button class="nav-btn" onclick="setTab('${id}')">
-      <span class="nav-btn-icon">${icon}</span>
-      <span class="nav-btn-label" style="color:${S.tab===id?'#2B6CB0':'#A0AEC0'};font-weight:${S.tab===id?800:500}">
-        ${label}
-      </span>
-      ${S.tab===id ? '<div class="nav-indicator"></div>' : ''}
-    </button>`;
-
-  return `
-    <div class="nav">
-      ${navTab('dash','📊','Dashboard')}
-      ${navTab('list','📋','Lançamentos')}
-      <button class="nav-btn" onclick="startNew()">
-        <div class="nav-add-wrap"><span class="nav-add-icon">+</span></div>
-        <span class="nav-btn-label" style="color:${S.tab==='form'?'#2B6CB0':'#A0AEC0'};font-weight:${S.tab==='form'?800:500};margin-top:1px">Novo</span>
-      </button>
-      ${navTab('settings','⚙️','Config')}
-    </div>`;
+// ── NAV ───────────────────────────────────────────────────────────
+function renderNav(){
+  const nb=(id,icon,label)=>`<button class="nav-btn" onclick="setTab('${id}')">
+    <span class="nav-btn-icon">${icon}</span>
+    <span class="nav-btn-label" style="color:${S.tab===id?'#2B6CB0':'#A0AEC0'};font-weight:${S.tab===id?800:500}">${label}</span>
+    ${S.tab===id?'<div class="nav-indicator"></div>':''}
+  </button>`;
+  return`<div class="nav">
+    ${nb('dash','📊','Dashboard')}
+    ${nb('list','📋','Lançamentos')}
+    <button class="nav-btn" onclick="startNew()">
+      <div class="nav-add-wrap"><span class="nav-add-icon">+</span></div>
+      <span class="nav-btn-label" style="color:${S.tab==='form'?'#2B6CB0':'#A0AEC0'};font-weight:${S.tab==='form'?800:500};margin-top:1px">Novo</span>
+    </button>
+    ${nb('fluxo','💰','Fluxo')}
+    ${nb('settings','⚙️','Config')}
+  </div>`;
 }
 
-/* ─── Dashboard ────────────────────────────────────────────────── */
-function renderDash(k) {
-  return `
+// ── DASHBOARD ─────────────────────────────────────────────────────
+function renderDash(k){
+  return`
     <div class="kpi-grid">
       ${[
         {icon:'💸',val:fmt(k.totalPago),label:'Total Pago',c:'#276749'},
         {icon:'💰',val:S.orc>0?fmt(k.saldo):'—',label:'Saldo',c:k.saldo<0?'#9B2C2C':'#2B6CB0'},
         {icon:'💳',val:fmt(k.totalParc),label:'Parcelas em Aberto',c:'#B7791F'},
         {icon:'⏳',val:fmt(k.totalPend),label:'Pendente',c:'#9B2C2C'},
-      ].map(ki=>`
-        <div class="kpi" style="border-left:4px solid ${ki.c}">
-          <div class="kpi-icon">${ki.icon}</div>
-          <div class="kpi-val" style="color:${ki.c}">${ki.val}</div>
-          <div class="kpi-label">${ki.label}</div>
-        </div>
-      `).join('')}
+      ].map(ki=>`<div class="kpi" style="border-left:4px solid ${ki.c}">
+        <div class="kpi-icon">${ki.icon}</div>
+        <div class="kpi-val" style="color:${ki.c}">${ki.val}</div>
+        <div class="kpi-label">${ki.label}</div>
+      </div>`).join('')}
     </div>
 
-    <!-- Orçamento -->
+    ${k.atrasado>0||k.vceMes>0?`<div class="card" style="border-left:4px solid #E53E3E;padding:12px 16px">
+      <div style="font-size:11px;font-weight:700;color:#C53030;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">⚠️ Atenção</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        ${k.atrasado>0?`<div><div style="font-size:16px;font-weight:900;color:#C53030">${fmt(k.atrasado)}</div><div style="font-size:11px;color:#718096">🔴 Em atraso</div></div>`:''}
+        ${k.vceMes>0?`<div><div style="font-size:16px;font-weight:900;color:#B7791F">${fmt(k.vceMes)}</div><div style="font-size:11px;color:#718096">📅 Vence este mês</div></div>`:''}
+      </div>
+    </div>`:''}
+
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="flex:1">
-          <div style="font-size:10px;color:#718096;font-weight:700;text-transform:uppercase;letter-spacing:.08em">
-            Orçamento Total da Reforma
-          </div>
-          ${S.orcEdit ? `
-            <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
-              <input class="input" id="orcInput" type="number" value="${S.orc||''}"
-                placeholder="Ex: 120000" style="width:140px">
-              <button class="btn btn-primary btn-sm" onclick="saveOrcamento()">Salvar</button>
-              <button class="btn btn-secondary btn-sm" onclick="setOrcEdit(false)">×</button>
-            </div>
-          ` : `
-            <div style="font-size:22px;font-weight:900;color:#1A365D;margin-top:4px">
-              ${S.orc>0 ? fmt(S.orc) : '<span style="color:#A0AEC0;font-size:14px">Não definido</span>'}
-            </div>
-          `}
+          <div style="font-size:10px;color:#718096;font-weight:700;text-transform:uppercase;letter-spacing:.08em">Orçamento Total</div>
+          ${S.orcEdit?`<div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+            <input class="input" id="orcInput" type="number" value="${S.orc||''}" placeholder="Ex: 120000" style="width:140px">
+            <button class="btn btn-primary btn-sm" onclick="saveOrcamento()">Salvar</button>
+            <button class="btn btn-secondary btn-sm" onclick="setOrcEdit(false)">×</button>
+          </div>`:`<div style="font-size:22px;font-weight:900;color:#1A365D;margin-top:4px">${S.orc>0?fmt(S.orc):'<span style="color:#A0AEC0;font-size:14px">Não definido</span>'}</div>`}
         </div>
-        ${!S.orcEdit ? `
-          <button class="btn btn-secondary btn-sm" onclick="setOrcEdit(true)">
-            ${S.orc>0?'Editar':'Definir'}
-          </button>
-        ` : ''}
+        ${!S.orcEdit?`<button class="btn btn-secondary btn-sm" onclick="setOrcEdit(true)">${S.orc>0?'Editar':'Definir'}</button>`:''}
       </div>
     </div>
 
-    <!-- Chart Segmento -->
     <div class="card">
-      <div class="section-title">📊 Por Segmento de Custo</div>
-      <canvas id="segChart" style="max-height:280px"></canvas>
-      <div id="segChart_empty" style="display:none" class="empty">
-        <div class="empty-icon">📊</div>
-        <div class="empty-title">Sem dados ainda</div>
-      </div>
+      <div class="section-title">📊 Por Segmento</div>
+      <canvas id="segChart" style="max-height:260px"></canvas>
+      <div id="segChart_empty" style="display:none" class="empty"><div class="empty-icon">📊</div><div class="empty-title">Sem dados</div></div>
     </div>
-
-    <!-- Chart Ambiente -->
     <div class="card">
       <div class="section-title">🏠 Por Ambiente</div>
-      <canvas id="ambChart" style="max-height:220px"></canvas>
-      <div id="ambChart_empty" style="display:none" class="empty">
-        <div class="empty-icon">🏠</div>
-        <div class="empty-title">Sem dados ainda</div>
-      </div>
+      <canvas id="ambChart" style="max-height:200px"></canvas>
+      <div id="ambChart_empty" style="display:none" class="empty"><div class="empty-icon">🏠</div><div class="empty-title">Sem dados</div></div>
     </div>
-
-    ${S.txs.length===0 ? `
-      <div class="empty">
-        <div class="empty-icon">📋</div>
-        <div class="empty-title">Nenhum lançamento ainda</div>
-        <div class="empty-sub">Toque em + para adicionar o primeiro comprovante</div>
-      </div>
-    ` : `
-      <div class="card" style="padding:12px 16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-          <span style="font-size:12px;color:#718096;font-weight:700">${S.txs.length} lançamento(s)</span>
-          <span style="font-size:12px;color:#718096;font-weight:600">
-            ${S.txs.filter(t=>t.status==='Pago à Vista').length} à vista ·
-            ${S.txs.filter(t=>t.status.includes('Parcelado')).length} parcelado(s) ·
-            ${S.txs.filter(t=>t.status==='Pendente').length} pendente(s)
-          </span>
-        </div>
-      </div>
-    `}
+    ${S.txs.length===0?`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Nenhum lançamento</div><div class="empty-sub">Toque em + para adicionar</div></div>`:''}
   `;
 }
 
-/* ─── Lançamentos ──────────────────────────────────────────────── */
-function renderList() {
-  const list  = filtered();
-  const total = list.reduce((s,t)=>s+t.valorTotal,0);
-  return `
+// ── LANÇAMENTOS ───────────────────────────────────────────────────
+function renderList(){
+  const list=filtered();
+  return`
     <div class="search-bar">
-      <input class="input" id="searchInput" value="${esc(S.search)}"
-        placeholder="🔍 Buscar por descrição, fornecedor…" oninput="updateSearch(this.value)">
+      <input class="input" id="searchInput" value="${esc(S.search)}" placeholder="🔍 Buscar..." oninput="updateSearch(this.value)">
       <select class="input filter-sel" onchange="updateSegFilter(this.value)">
         <option value="">Todos</option>
-        ${SEGMENTOS.map(seg=>`
-          <option value="${esc(seg)}" ${S.segFilter===seg?'selected':''}>
-            ${esc(seg.split('/')[0].trim())}
-          </option>
-        `).join('')}
+        ${SEGMENTOS.map(s=>`<option value="${esc(s)}" ${S.segFilter===s?'selected':''}>${esc(s.split('/')[0].trim())}</option>`).join('')}
       </select>
     </div>
-
     <div class="total-bar">
       <span style="font-size:12px;color:#718096;font-weight:700">${list.length} resultado(s)</span>
-      <span style="font-size:15px;font-weight:900;color:#1A365D">${fmt(total)}</span>
+      <span style="font-size:15px;font-weight:900;color:#1A365D">${fmt(list.reduce((s,t)=>s+t.valorTotal,0))}</span>
     </div>
-
-    ${list.length===0 ? `
-      <div class="empty">
-        <div class="empty-icon">🔍</div>
-        <div class="empty-title">Nenhum resultado</div>
-        <div class="empty-sub">Tente outra busca ou limpe os filtros</div>
-      </div>
-    ` : list.map(renderTxCard).join('')}
+    ${list.length===0?`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">Nenhum resultado</div></div>`:list.map(renderTxCard).join('')}
   `;
 }
 
-function renderTxCard(tx) {
-  const ss  = STATUS_STYLE[tx.status] || STATUS_STYLE['Cancelado'];
-  const seg = tx.segmento ? tx.segmento.split('/')[0].trim() : '';
-  return `
-    <div class="tx-card" style="border-left:4px solid ${ss.bg}">
-      <div class="tx-header">
-        <div style="flex:1;min-width:0">
-          <div class="tx-desc">${esc(tx.descricao)}</div>
-          ${tx.fornecedor?`<div class="tx-supplier">📦 ${esc(tx.fornecedor)}</div>`:''}
-        </div>
-        <div>
-          <div class="tx-amount">${fmt(tx.valorTotal)}</div>
-          ${tx.status==='Parcelado em Andamento'
-            ? `<div class="tx-paid">Pago: ${fmt(tx.totalPago)}</div>` : ''}
-        </div>
+function renderTxCard(tx){
+  const ss=STATUS_STYLE[tx.status]||STATUS_STYLE['Cancelado'];
+  const seg=tx.segmento?tx.segmento.split('/')[0].trim():'';
+  return`<div class="tx-card" style="border-left:4px solid ${ss.bg}">
+    <div class="tx-header">
+      <div style="flex:1;min-width:0">
+        <div class="tx-desc">${esc(tx.descricao)}</div>
+        ${tx.fornecedor?`<div class="tx-supplier">📦 ${esc(tx.fornecedor)}</div>`:''}
       </div>
-      <div class="pills-row">
-        <span class="pill" style="background:${ss.bg};color:${ss.c}">${esc(tx.status)}</span>
-        ${seg?`<span class="pill" style="background:#EBF8FF;color:#2C5282">${esc(seg)}</span>`:''}
-        ${tx.centro?`<span class="pill" style="background:#F3E8FF;color:#553C9A">${esc(tx.centro)}</span>`:''}
-        ${tx.forma?`<span class="pill" style="background:#F0FFF4;color:#276749">${esc(tx.forma)}</span>`:''}
-        <span class="pill" style="background:#EDF2F7;color:#4A5568">${esc(tx.data)}</span>
-      </div>
-      ${tx.obs?`<div class="tx-obs">${esc(tx.obs)}</div>`:''}
-      <div class="tx-actions">
-        <button class="btn btn-secondary btn-sm" style="flex:1"
-          onclick="startEdit('${esc(tx.id)}')">✏️ Editar</button>
-        <button class="btn btn-danger btn-sm"
-          onclick="confirmDelete('${esc(tx.id)}')">🗑️</button>
+      <div>
+        <div class="tx-amount">${fmt(tx.valorTotal)}</div>
+        ${tx.status==='Parcelado em Andamento'?`<div class="tx-paid">${tx.parcelasPagas}/${tx.totalParcelas} parcelas</div>`:''}
       </div>
     </div>
-  `;
+    <div class="pills-row">
+      <span class="pill" style="background:${ss.bg};color:${ss.c}">${esc(tx.status)}</span>
+      ${seg?`<span class="pill" style="background:#EBF8FF;color:#2C5282">${esc(seg)}</span>`:''}
+      ${tx.centro?`<span class="pill" style="background:#F3E8FF;color:#553C9A">${esc(tx.centro)}</span>`:''}
+      ${tx.forma?`<span class="pill" style="background:#F0FFF4;color:#276749">${esc(tx.forma)}</span>`:''}
+      <span class="pill" style="background:#EDF2F7;color:#4A5568">${esc(tx.data)}</span>
+    </div>
+    ${tx.obs?`<div class="tx-obs">${esc(tx.obs)}</div>`:''}
+    <div class="tx-actions">
+      <button class="btn btn-secondary btn-sm" style="flex:1" onclick="startEdit('${esc(tx.id)}')">✏️ Editar</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDelete('${esc(tx.id)}')">🗑️</button>
+    </div>
+  </div>`;
 }
 
-/* ─── Novo / Editar ────────────────────────────────────────────── */
-function renderForm() {
-  const f = S.form;
-  const isParc = f.status.includes('Parcelado');
-  return `
-    ${S.editId ? '<div class="edit-banner">✏️ Editando lançamento</div>' : ''}
-
-    ${!S.editId ? `
-      <div class="pdf-drop ${S.extracting?'loading':''}" id="pdfDrop" onclick="triggerPdf()">
-        ${S.extracting ? `
-          <div style="display:flex;justify-content:center;margin-bottom:10px">
-            <div class="spinner spin" style="width:32px;height:32px;border-color:#BEE3F8;border-top-color:#2B6CB0"></div>
-          </div>
-          <div style="font-weight:800;color:#2B6CB0;font-size:15px">Lendo comprovante…</div>
-          <div style="font-size:12px;color:#718096;margin-top:4px">A IA está extraindo os dados</div>
-        ` : `
-          <div style="font-size:38px;margin-bottom:8px">📄</div>
-          <div style="font-weight:800;color:#1A365D;font-size:15px">Enviar Comprovante PDF</div>
-          <div style="font-size:12px;color:#718096;margin-top:4px">
-            Toque para selecionar ou arraste o arquivo
-          </div>
-          <div class="pdf-ai-badge">✨ Preenchimento automático com IA</div>
-        `}
-      </div>
-    ` : ''}
-
+// ── FORM ──────────────────────────────────────────────────────────
+function renderForm(){
+  const f=S.form;
+  const isParc=f.status.includes('Parcelado');
+  return`
+    ${S.editId?'<div class="edit-banner">✏️ Editando lançamento</div>':''}
+    ${!S.editId?`<div class="pdf-drop ${S.extracting?'loading':''}" id="pdfDrop" onclick="triggerPdf()">
+      ${S.extracting?`<div style="display:flex;justify-content:center;margin-bottom:10px"><div class="spinner spin" style="width:32px;height:32px;border-color:#BEE3F8;border-top-color:#2B6CB0"></div></div><div style="font-weight:800;color:#2B6CB0;font-size:15px">Lendo comprovante…</div>`
+      :`<div style="font-size:38px;margin-bottom:8px">📄</div><div style="font-weight:800;color:#1A365D;font-size:15px">Enviar Comprovante PDF</div><div style="font-size:12px;color:#718096;margin-top:4px">Toque para selecionar ou arraste</div><div class="pdf-ai-badge">✨ Preenchimento automático com IA</div>`}
+    </div>`:''}
     <div class="card">
-      <div class="field">
-        <label class="field-label">Data do Pagamento</label>
-        <input class="input" id="f_data" type="text" value="${esc(f.data)}" placeholder="DD/MM/AAAA">
-      </div>
-      <div class="field">
-        <label class="field-label">Descrição *</label>
-        <input class="input" id="f_descricao" value="${esc(f.descricao)}"
-          placeholder="Ex: Piso cerâmico cozinha, mão de obra elétrica…">
-      </div>
-      <div class="field">
-        <label class="field-label">Fornecedor / Loja</label>
-        <input class="input" id="f_fornecedor" value="${esc(f.fornecedor)}"
-          placeholder="Nome da empresa ou profissional">
-      </div>
+      <div class="field"><label class="field-label">Data do Pagamento</label><input class="input" id="f_data" type="text" value="${esc(f.data)}" placeholder="DD/MM/AAAA"></div>
+      <div class="field"><label class="field-label">Descrição *</label><input class="input" id="f_descricao" value="${esc(f.descricao)}" placeholder="Ex: Piso cerâmico, mão de obra elétrica…"></div>
+      <div class="field"><label class="field-label">Fornecedor / Loja</label><input class="input" id="f_fornecedor" value="${esc(f.fornecedor)}" placeholder="Nome da empresa ou profissional"></div>
       <div class="input-grid">
-        <div class="field">
-          <label class="field-label">Segmento</label>
-          <select class="input" id="f_segmento">
-            <option value="">Selecione…</option>
-            ${SEGMENTOS.map(s=>`<option value="${esc(s)}" ${f.segmento===s?'selected':''}>${esc(s)}</option>`).join('')}
-          </select>
+        <div class="field"><label class="field-label">Segmento</label>
+          <select class="input" id="f_segmento"><option value="">Selecione…</option>${SEGMENTOS.map(s=>`<option value="${esc(s)}" ${f.segmento===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
         </div>
-        <div class="field">
-          <label class="field-label">Ambiente</label>
-          <select class="input" id="f_centro">
-            <option value="">Selecione…</option>
-            ${CENTROS.map(c=>`<option value="${esc(c)}" ${f.centro===c?'selected':''}>${esc(c)}</option>`).join('')}
-          </select>
+        <div class="field"><label class="field-label">Ambiente</label>
+          <select class="input" id="f_centro"><option value="">Selecione…</option>${CENTROS.map(c=>`<option value="${esc(c)}" ${f.centro===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
         </div>
       </div>
       <div class="input-grid">
-        <div class="field">
-          <label class="field-label">Forma de Pagamento</label>
-          <select class="input" id="f_forma">
-            ${FORMAS.map(fm=>`<option value="${esc(fm)}" ${f.forma===fm?'selected':''}>${esc(fm)}</option>`).join('')}
-          </select>
+        <div class="field"><label class="field-label">Forma de Pagamento</label>
+          <select class="input" id="f_forma">${FORMAS.map(fm=>`<option value="${esc(fm)}" ${f.forma===fm?'selected':''}>${esc(fm)}</option>`).join('')}</select>
         </div>
-        <div class="field">
-          <label class="field-label">Status</label>
-          <select class="input" id="f_status" onchange="onStatusChange(this.value)">
-            ${STATUS_OPT.map(s=>`<option value="${esc(s)}" ${f.status===s?'selected':''}>${esc(s)}</option>`).join('')}
-          </select>
+        <div class="field"><label class="field-label">Status</label>
+          <select class="input" id="f_status" onchange="onStatusChange(this.value)">${STATUS_OPT.map(s=>`<option value="${esc(s)}" ${f.status===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
         </div>
       </div>
-      <div class="field">
-        <label class="field-label">Valor Total do Contrato (R$) *</label>
-        <input class="input" id="f_valorTotal" type="number" step="0.01"
-          value="${esc(f.valorTotal)}" placeholder="0.00" oninput="onValorChange()">
+      <div class="field"><label class="field-label">Valor Total do Contrato (R$) *</label>
+        <input class="input" id="f_valorTotal" type="number" step="0.01" value="${esc(f.valorTotal)}" placeholder="0.00" oninput="onValorChange()">
       </div>
       <div id="parcSection" ${isParc?'':'style="display:none"'}>
         <div class="input-grid">
-          <div class="field">
-            <label class="field-label">Parcelas Pagas (até agora)</label>
-            <input class="input" id="f_parcelas" type="number" min="1"
-              value="${esc(f.parcelas)}" oninput="onParcelasChange()">
+          <div class="field"><label class="field-label">Total de Parcelas</label>
+            <input class="input" id="f_totalParcelas" type="number" min="1" value="${esc(f.totalParcelas)}" oninput="onParcelasChange()">
           </div>
-          <div class="field">
-            <label class="field-label">Valor por Parcela (R$)</label>
-            <input class="input" id="f_valorParcela" type="number" step="0.01"
-              value="${esc(f.valorParcela)}" placeholder="0.00">
+          <div class="field"><label class="field-label">Valor por Parcela (R$)</label>
+            <input class="input" id="f_valorParcela" type="number" step="0.01" value="${esc(f.valorParcela)}" placeholder="0.00">
+          </div>
+        </div>
+        <div class="input-grid">
+          <div class="field"><label class="field-label">Data da 1ª Parcela</label>
+            <input class="input" id="f_dataPrimeiraParcela" type="text" value="${esc(f.dataPrimeiraParcela)}" placeholder="DD/MM/AAAA">
+          </div>
+          <div class="field"><label class="field-label">Parcelas Já Pagas</label>
+            <input class="input" id="f_parcelasPagas" type="number" min="0" value="${esc(f.parcelasPagas)}">
           </div>
         </div>
       </div>
-      <div class="field">
-        <label class="field-label">Observações / Nº Controle Pix</label>
-        <textarea class="input" id="f_obs" rows="3"
-          placeholder="Código de controle Pix, anotações, parcelas restantes…">${esc(f.obs)}</textarea>
+      <div class="field"><label class="field-label">Observações</label>
+        <textarea class="input" id="f_obs" rows="3" placeholder="Nº Pix, notas…">${esc(f.obs)}</textarea>
       </div>
     </div>
-
     <div class="btn-row">
       <button class="btn btn-secondary" style="flex:1" onclick="cancelForm()">Cancelar</button>
-      <button class="btn btn-primary" style="flex:2" id="saveBtn" onclick="handleSave()">
-        ${S.saving ? 'Salvando…' : S.editId ? '✅ Atualizar' : '💾 Salvar Lançamento'}
-      </button>
+      <button class="btn btn-primary" style="flex:2" id="saveBtn" onclick="handleSave()">${S.saving?'Salvando…':S.editId?'✅ Atualizar':'💾 Salvar'}</button>
     </div>
   `;
 }
 
-/* ─── Configurações ────────────────────────────────────────────── */
-function renderSettings() {
-  const storedKey = localStorage.getItem('anthropic_key')||'';
-  return `
-    <div class="card">
-      <div class="section-title">🤖 Chave API Anthropic (leitura de PDF)</div>
-      <p style="font-size:12px;color:#718096;margin-bottom:12px;line-height:1.6">
-        Para a IA ler os comprovantes automaticamente, cole sua API key Anthropic aqui.
-        Ela fica salva <strong>só neste dispositivo</strong>, nunca vai para o servidor.
-      </p>
-      <div class="field">
-        <label class="field-label">API Key</label>
-        <input class="input" id="apiKeyInput" type="password"
-          value="${esc(storedKey)}" placeholder="sk-ant-api03-…">
+// ── FLUXO ─────────────────────────────────────────────────────────
+function renderFluxo(){
+  const{fluxoAno:y,fluxoMes:m}=S;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const allParc=getAllInstallments();
+  const mesParcelas=allParc.filter(p=>p.dataVenc.getMonth()+1===m&&p.dataVenc.getFullYear()===y);
+  const flow=getMonthlyFlow();
+
+  const pgMes=mesParcelas.filter(p=>p.pago).reduce((s,p)=>s+p.valor,0);
+  const vencMes=mesParcelas.filter(p=>!p.pago&&!p.atrasado).reduce((s,p)=>s+p.valor,0);
+  const atrasadoMes=mesParcelas.filter(p=>p.atrasado).reduce((s,p)=>s+p.valor,0);
+
+  // Also add à vista payments for this month
+  const avistaMes=S.txs.filter(t=>{
+    if(t.status!=='Pago à Vista')return false;
+    const dt=parseDate(t.data);
+    return dt&&dt.getMonth()+1===m&&dt.getFullYear()===y;
+  }).reduce((s,t)=>s+t.valorTotal,0);
+
+  // Future months with commitments
+  const futureMonths=flow.filter(f=>f.year>y||(f.year===y&&f.month>m)).slice(0,12);
+
+  return`
+    <div class="mes-nav">
+      <button class="mes-nav-btn" onclick="prevMes()">‹</button>
+      <div class="mes-title">${fmtMes(y,m)}</div>
+      <button class="mes-nav-btn" onclick="nextMes()">›</button>
+    </div>
+
+    <div class="kpi-grid" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div class="kpi" style="border-left:4px solid #276749;padding:12px">
+        <div class="kpi-val" style="color:#276749;font-size:14px">${fmt(pgMes+avistaMes)}</div>
+        <div class="kpi-label">✅ Pago</div>
       </div>
+      <div class="kpi" style="border-left:4px solid #B7791F;padding:12px">
+        <div class="kpi-val" style="color:#B7791F;font-size:14px">${fmt(vencMes)}</div>
+        <div class="kpi-label">📅 A vencer</div>
+      </div>
+      <div class="kpi" style="border-left:4px solid #C53030;padding:12px">
+        <div class="kpi-val" style="color:#C53030;font-size:14px">${fmt(atrasadoMes)}</div>
+        <div class="kpi-label">🔴 Atrasado</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📅 Vencimentos em ${MESES[m-1]}</div>
+      ${mesParcelas.length===0&&avistaMes===0?`<div style="text-align:center;padding:20px;color:#A0AEC0;font-size:13px">Nenhum vencimento neste mês</div>`:''}
+      ${S.txs.filter(t=>{if(t.status!=='Pago à Vista')return false;const dt=parseDate(t.data);return dt&&dt.getMonth()+1===m&&dt.getFullYear()===y;}).map(t=>`
+        <div class="parc-card">
+          <div class="parc-day" style="background:#C6F6D5;color:#276749">${parseDate(t.data).getDate()}</div>
+          <div class="parc-info">
+            <div class="parc-desc">${esc(t.descricao)}</div>
+            <div class="parc-sub">${esc(t.fornecedor||'')} · À vista</div>
+          </div>
+          <div style="text-align:right">
+            <div class="parc-valor">${fmt(t.valorTotal)}</div>
+            <span style="font-size:10px;background:#C6F6D5;color:#276749;padding:2px 7px;border-radius:99px;font-weight:700">✓ Pago</span>
+          </div>
+        </div>
+      `).join('')}
+      ${mesParcelas.sort((a,b)=>a.dataVenc-b.dataVenc).map(p=>{
+        const bg=p.pago?'#C6F6D5':p.atrasado?'#FED7D7':'#FEFCBF';
+        const fc=p.pago?'#276749':p.atrasado?'#C53030':'#744210';
+        return`<div class="parc-card">
+          <div class="parc-day" style="background:${bg};color:${fc}">${p.dataVenc.getDate()}</div>
+          <div class="parc-info">
+            <div class="parc-desc">${esc(p.txDesc)}</div>
+            <div class="parc-sub">${esc(p.txFornecedor||'')} · Parc ${p.numero}/${p.total} · ${fmt(p.valor)}</div>
+          </div>
+          <div style="text-align:right">
+            ${p.pago
+              ?`<span style="font-size:10px;background:#C6F6D5;color:#276749;padding:2px 8px;border-radius:99px;font-weight:700">✓ Pago</span>`
+              :`<button class="parc-btn" style="background:${p.atrasado?'#FED7D7':'#FEFCBF'};color:${p.atrasado?'#C53030':'#744210'};border:1.5px solid ${p.atrasado?'#FEB2B2':'#F6E05E'}" onclick="pagarParcela('${p.txId}')">
+                ${p.atrasado?'🔴 Pagar':'Pagar'}
+              </button>`}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="card">
+      <div class="section-title">📈 Fluxo Mensal</div>
+      <canvas id="flowChart" height="160"></canvas>
+      ${flow.length===0?`<div style="text-align:center;padding:20px;color:#A0AEC0;font-size:13px">Sem dados suficientes</div>`:''}
+    </div>
+
+    ${futureMonths.length>0?`<div class="card">
+      <div class="section-title">🔮 Compromissos Futuros</div>
+      ${futureMonths.map(f=>`
+        <div class="flow-month-row">
+          <div class="flow-month-label">${f.label}</div>
+          <div class="flow-month-values">
+            <div class="flow-month-total">${fmt(f.due+f.future)}</div>
+            <div class="flow-month-detail">${f.due+f.future>0?`${Math.round(((f.due+f.future)/(f.paid+f.due+f.future))*100)}% a vencer`:''}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>`:''}
+  `;
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────
+function renderSettings(){
+  const key=localStorage.getItem('anthropic_key')||'';
+  return`
+    <div class="card">
+      <div class="section-title">🤖 API Anthropic (leitura de PDF)</div>
+      <p style="font-size:12px;color:#718096;margin-bottom:12px;line-height:1.6">Salva só neste dispositivo — nunca vai ao servidor.</p>
+      <div class="field"><label class="field-label">API Key</label><input class="input" id="apiKeyInput" type="password" value="${esc(key)}" placeholder="sk-ant-…"></div>
       <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Salvar Key</button>
-      ${storedKey ? `<button class="btn btn-danger btn-sm" style="margin-left:8px"
-        onclick="clearApiKey()">Apagar</button>` : ''}
+      ${key?`<button class="btn btn-danger btn-sm" style="margin-left:8px" onclick="clearApiKey()">Apagar</button>`:''}
     </div>
-
     <div class="card">
-      <div class="section-title">💰 Orçamento da Reforma</div>
-      <div class="field">
-        <label class="field-label">Valor total previsto (R$)</label>
-        <input class="input" id="orcSettingsInput" type="number"
-          value="${S.orc||''}" placeholder="Ex: 150000">
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="saveOrcSettings()">Salvar Orçamento</button>
+      <div class="section-title">💰 Orçamento</div>
+      <div class="field"><label class="field-label">Valor total previsto (R$)</label><input class="input" id="orcSettingsInput" type="number" value="${S.orc||''}" placeholder="Ex: 150000"></div>
+      <button class="btn btn-primary btn-sm" onclick="saveOrcSettings()">Salvar</button>
     </div>
-
     <div class="card">
-      <div class="section-title">ℹ️ Informações do Projeto</div>
-      <p style="font-size:12px;color:#718096;line-height:1.8">
-        <strong>Projeto:</strong> Reforma Autoria<br>
-        <strong>Responsáveis:</strong> Rodrigo &amp; Daniela<br>
-        <strong>Lançamentos:</strong> ${S.txs.length}<br>
-        <strong>Total contratado:</strong> ${fmt(S.txs.reduce((s,t)=>s+t.valorTotal,0))}<br>
-        <strong>Sincronização:</strong> Supabase (tempo real)
-      </p>
+      <div class="section-title">ℹ️ Projeto</div>
+      <p style="font-size:12px;color:#718096;line-height:1.8"><strong>Responsáveis:</strong> Rodrigo &amp; Daniela<br><strong>Lançamentos:</strong> ${S.txs.length}<br><strong>Total contratado:</strong> ${fmt(S.txs.reduce((s,t)=>s+t.valorTotal,0))}</p>
     </div>
   `;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   HANDLERS
-   ══════════════════════════════════════════════════════════════ */
-function attachEvents() {
-  const drop = document.getElementById('pdfDrop');
-  if (drop) {
-    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
-    drop.addEventListener('dragleave',   () => drop.classList.remove('over'));
-    drop.addEventListener('drop', e => {
-      e.preventDefault(); drop.classList.remove('over');
-      handlePdfFile(e.dataTransfer.files[0]);
-    });
+// ── HANDLERS ─────────────────────────────────────────────────────
+function attachEvents(){
+  const drop=document.getElementById('pdfDrop');
+  if(drop){
+    drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over');});
+    drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
+    drop.addEventListener('drop',e=>{e.preventDefault();handlePdfFile(e.dataTransfer.files[0]);});
   }
 }
 
-function setTab(tab)    { S.tab=tab; render(); }
-function setOrcEdit(v)  { S.orcEdit=v; render(); }
+function setTab(tab){S.tab=tab;render();}
+function setOrcEdit(v){S.orcEdit=v;render();}
+function prevMes(){S.fluxoMes--;if(S.fluxoMes<1){S.fluxoMes=12;S.fluxoAno--;}render();}
+function nextMes(){S.fluxoMes++;if(S.fluxoMes>12){S.fluxoMes=1;S.fluxoAno++;}render();}
 
-function startNew() {
-  S.form=emptyForm(); S.form.data=today();
-  S.editId=null; S.tab='form'; render();
+function startNew(){S.form=emptyForm();S.form.data=today();S.editId=null;S.tab='form';render();}
+
+function startEdit(id){
+  const tx=S.txs.find(t=>t.id===id);if(!tx)return;
+  S.form={data:tx.data,descricao:tx.descricao,fornecedor:tx.fornecedor||'',segmento:tx.segmento||'',centro:tx.centro||'',forma:tx.forma||'Pix',valorTotal:String(tx.valorTotal||''),totalParcelas:String(tx.totalParcelas||1),parcelasPagas:String(tx.parcelasPagas||0),valorParcela:String(tx.valorParcela||''),dataPrimeiraParcela:tx.dataPrimeiraParcela||'',status:tx.status||'Pago à Vista',obs:tx.obs||''};
+  S.editId=id;S.tab='form';render();
 }
 
-function startEdit(id) {
-  const tx = S.txs.find(t=>t.id===id);
-  if (!tx) return;
-  S.form = {
-    data:tx.data, descricao:tx.descricao, fornecedor:tx.fornecedor||'',
-    segmento:tx.segmento||'', centro:tx.centro||'', forma:tx.forma||'Pix',
-    valorTotal:String(tx.valorTotal||''), parcelas:String(tx.parcelas||1),
-    valorParcela:String(tx.valorParcela||''), status:tx.status||'Pago à Vista', obs:tx.obs||''
-  };
-  S.editId=id; S.tab='form'; render();
+function cancelForm(){S.form=emptyForm();S.editId=null;S.tab='list';render();}
+
+function updateSearch(v){S.search=v;document.querySelector('.content').innerHTML=renderList();attachEvents();}
+function updateSegFilter(v){S.segFilter=v;document.querySelector('.content').innerHTML=renderList();attachEvents();}
+
+function onStatusChange(val){
+  const el=document.getElementById('parcSection');
+  if(el)el.style.display=val.includes('Parcelado')?'':'none';
 }
 
-function cancelForm() {
-  S.form=emptyForm(); S.editId=null;
-  S.tab='list'; render();
+function onValorChange(){
+  const vt=parseFloat(document.getElementById('f_valorTotal')?.value)||0;
+  const pc=parseInt(document.getElementById('f_totalParcelas')?.value)||1;
+  const vp=document.getElementById('f_valorParcela');
+  if(vp&&pc>0) vp.value=(vt/pc).toFixed(2);
 }
 
-function updateSearch(v) {
-  S.search=v;
-  document.querySelector('.content').innerHTML = renderList();
-  attachEvents();
+function onParcelasChange(){
+  const vt=parseFloat(document.getElementById('f_valorTotal')?.value)||0;
+  const pc=parseInt(document.getElementById('f_totalParcelas')?.value)||1;
+  const vp=document.getElementById('f_valorParcela');
+  if(vp&&vt>0) vp.value=(vt/pc).toFixed(2);
 }
 
-function updateSegFilter(v) {
-  S.segFilter=v;
-  document.querySelector('.content').innerHTML = renderList();
-  attachEvents();
+function readForm(){
+  const g=id=>document.getElementById(id)?.value||'';
+  return{data:g('f_data'),descricao:g('f_descricao'),fornecedor:g('f_fornecedor'),segmento:g('f_segmento'),centro:g('f_centro'),forma:g('f_forma'),status:g('f_status'),valorTotal:g('f_valorTotal'),totalParcelas:g('f_totalParcelas'),parcelasPagas:g('f_parcelasPagas'),valorParcela:g('f_valorParcela'),dataPrimeiraParcela:g('f_dataPrimeiraParcela'),obs:g('f_obs')};
 }
 
-function onStatusChange(val) {
-  const el = document.getElementById('parcSection');
-  if (el) el.style.display = val.includes('Parcelado') ? '' : 'none';
-}
-
-function onValorChange() {
-  const vt = parseFloat(document.getElementById('f_valorTotal')?.value)||0;
-  const pc = parseInt(document.getElementById('f_parcelas')?.value)||1;
-  const vp = document.getElementById('f_valorParcela');
-  if (vp && pc>1) vp.value = (vt/pc).toFixed(2);
-}
-
-function onParcelasChange() {
-  const vt = parseFloat(document.getElementById('f_valorTotal')?.value)||0;
-  const pc = parseInt(document.getElementById('f_parcelas')?.value)||1;
-  const vp = document.getElementById('f_valorParcela');
-  if (vp && vt>0) vp.value = (vt/pc).toFixed(2);
-}
-
-function readFormValues() {
-  const g = id => document.getElementById(id)?.value||'';
-  return {
-    data:g('f_data'), descricao:g('f_descricao'), fornecedor:g('f_fornecedor'),
-    segmento:g('f_segmento'), centro:g('f_centro'), forma:g('f_forma'),
-    status:g('f_status'), valorTotal:g('f_valorTotal'),
-    parcelas:g('f_parcelas'), valorParcela:g('f_valorParcela'), obs:g('f_obs')
-  };
-}
-
-async function handleSave() {
-  const f = readFormValues();
-  if (!f.descricao.trim()||!f.valorTotal) {
-    showToast('⚠️ Preencha Descrição e Valor','err'); return;
-  }
-  if (S.saving) return;
+async function handleSave(){
+  const f=readForm();
+  if(!f.descricao.trim()||!f.valorTotal){showToast('⚠️ Preencha Descrição e Valor','err');return;}
+  if(S.saving)return;
   S.saving=true;
-  const btn=document.getElementById('saveBtn');
-  if(btn) btn.textContent='Salvando…';
-
-  const vt = parseFloat(f.valorTotal)||0;
-  const pc = parseInt(f.parcelas)||1;
-  const vp = parseFloat(f.valorParcela)||vt;
-  const tp = f.status==='Pago à Vista'||f.status==='Parcelado Quitado' ? vt
-           : f.status==='Parcelado em Andamento' ? Math.min(vp*pc, vt) : 0;
-
-  const tx = {
-    id: S.editId || uid(),
-    data:f.data, descricao:f.descricao.trim(), fornecedor:f.fornecedor,
-    segmento:f.segmento, centro:f.centro, forma:f.forma,
-    valorTotal:vt, parcelas:pc, valorParcela:vp, totalPago:tp,
-    status:f.status, obs:f.obs,
-    createdAt: S.editId
-      ? (S.txs.find(t=>t.id===S.editId)?.createdAt||new Date().toISOString())
-      : new Date().toISOString()
-  };
-
-  try {
+  const btn=document.getElementById('saveBtn');if(btn)btn.textContent='Salvando…';
+  const vt=parseFloat(f.valorTotal)||0;
+  const tp=parseInt(f.totalParcelas)||1;
+  const pp=Math.min(parseInt(f.parcelasPagas)||0,tp);
+  const vp=parseFloat(f.valorParcela)||vt;
+  const totalPago=f.status==='Pago à Vista'||f.status==='Parcelado Quitado'?vt:f.status==='Parcelado em Andamento'?pp*vp:0;
+  const tx={id:S.editId||uid(),data:f.data,descricao:f.descricao.trim(),fornecedor:f.fornecedor,segmento:f.segmento,centro:f.centro,forma:f.forma,valorTotal:vt,totalParcelas:tp,parcelasPagas:pp,valorParcela:vp,totalPago:Math.min(totalPago,vt),status:f.status,dataPrimeiraParcela:f.dataPrimeiraParcela,obs:f.obs,createdAt:S.editId?(S.txs.find(t=>t.id===S.editId)?.createdAt||new Date().toISOString()):new Date().toISOString()};
+  try{
     await upsertTx(tx);
-    showToast(S.editId?'✅ Atualizado!':'✅ Lançamento salvo!');
-    S.form=emptyForm(); S.editId=null; S.tab='list';
-  } catch(e) {
-    showToast('⚠️ Erro ao salvar. Tente novamente.','err');
-    console.error(e);
-  }
-  S.saving=false; render();
+    showToast(S.editId?'✅ Atualizado!':'✅ Salvo!');
+    S.form=emptyForm();S.editId=null;S.tab='list';
+  }catch(e){showToast('⚠️ Erro ao salvar: '+e.message,'err');}
+  S.saving=false;render();
 }
 
-async function confirmDelete(id) {
-  if (!confirm('Remover este lançamento?\nEsta ação não pode ser desfeita.')) return;
-  try {
-    await deleteTxById(id);
-    showToast('🗑️ Lançamento removido'); render();
-  } catch(e) {
-    showToast('⚠️ Erro ao remover','err');
-  }
+async function confirmDelete(id){
+  if(!confirm('Remover este lançamento?'))return;
+  try{await deleteTxById(id);showToast('🗑️ Removido');render();}
+  catch(e){showToast('⚠️ Erro','err');}
 }
 
-async function saveOrcamento() {
-  const v = parseFloat(document.getElementById('orcInput')?.value)||0;
-  try {
-    await persistOrc(v); S.orcEdit=false; render();
-    showToast('✅ Orçamento salvo!');
-  } catch(e) {
-    showToast('⚠️ Erro ao salvar orçamento','err');
-  }
+async function pagarParcela(txId){
+  const tx=S.txs.find(t=>t.id===txId);if(!tx)return;
+  const novasPagas=Math.min((tx.parcelasPagas||0)+1,tx.totalParcelas);
+  const novoTotal=novasPagas*tx.valorParcela;
+  const novoStatus=novasPagas>=tx.totalParcelas?'Parcelado Quitado':'Parcelado em Andamento';
+  const updated={...tx,parcelasPagas:novasPagas,totalPago:novoTotal,status:novoStatus};
+  const prevEdit=S.editId;S.editId=txId;
+  try{await upsertTx(updated);showToast(`✅ Parcela ${novasPagas}/${tx.totalParcelas} paga!`);}
+  catch(e){showToast('⚠️ Erro ao salvar','err');}
+  S.editId=prevEdit;render();
 }
 
-async function saveOrcSettings() {
-  const v = parseFloat(document.getElementById('orcSettingsInput')?.value)||0;
-  try {
-    await persistOrc(v);
-    showToast('✅ Orçamento salvo!');
-  } catch(e) {
-    showToast('⚠️ Erro ao salvar','err');
-  }
+async function saveOrcamento(){
+  const v=parseFloat(document.getElementById('orcInput')?.value)||0;
+  try{await persistOrc(v);S.orcEdit=false;render();showToast('✅ Orçamento salvo!');}
+  catch(e){showToast('⚠️ Erro','err');}
+}
+async function saveOrcSettings(){
+  const v=parseFloat(document.getElementById('orcSettingsInput')?.value)||0;
+  try{await persistOrc(v);showToast('✅ Orçamento salvo!');}catch(e){showToast('⚠️ Erro','err');}
 }
 
-function saveApiKey() {
-  const key = (document.getElementById('apiKeyInput')?.value||'').trim();
-  if (key) { localStorage.setItem('anthropic_key',key); showToast('✅ API Key salva!'); }
-  else      { localStorage.removeItem('anthropic_key'); showToast('🗑️ Key removida'); }
+async function salvarNome(){
+  const nome=(document.getElementById('nomeInput')?.value||'').trim()||'Reforma Authoria';
+  S.nomeProjeto=nome;S.editandoNome=false;
+  await sbFetch('reforma_config',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({chave:'nome_projeto',valor:nome})}).catch(()=>{});
   render();
 }
 
-function clearApiKey() {
-  localStorage.removeItem('anthropic_key');
-  showToast('🗑️ API Key removida'); render();
+function saveApiKey(){const key=(document.getElementById('apiKeyInput')?.value||'').trim();if(key){localStorage.setItem('anthropic_key',key);showToast('✅ Key salva!');}else{localStorage.removeItem('anthropic_key');showToast('🗑️ Key removida');}render();}
+function clearApiKey(){localStorage.removeItem('anthropic_key');showToast('🗑️ Key removida');render();}
+function triggerPdf(){if(!S.extracting)document.getElementById('pdfInput').click();}
+
+async function handlePdfFile(file){
+  if(!file||file.type!=='application/pdf')return;
+  const apiKey=localStorage.getItem('anthropic_key');
+  if(!apiKey){showToast('⚠️ Configure a API Key em ⚙️ Config','err');S.tab='settings';render();return;}
+  S.extracting=true;S.tab='form';S.form=emptyForm();S.form.data=today();S.editId=null;render();
+  try{
+    const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:'Analise este comprovante. Retorne SOMENTE JSON:\n{"data":"DD/MM/YYYY","valor":0.00,"fornecedor":"","forma":"Pix","numero_controle":""}'}]}]})});
+    const d=await resp.json();
+    const txt=d.content?.find(b=>b.type==='text')?.text||'{}';
+    const ex=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    S.form.data=ex.data||S.form.data;S.form.fornecedor=ex.fornecedor||'';S.form.forma=ex.forma||'Pix';S.form.valorTotal=ex.valor?String(ex.valor):'';S.form.valorParcela=ex.valor?String(ex.valor):'';S.form.obs=ex.numero_controle?`Ctrl Pix: ${ex.numero_controle}`:'';
+    showToast('✅ Comprovante lido! Confira os dados.');
+  }catch(e){showToast('⚠️ Erro ao ler PDF','err');}
+  S.extracting=false;render();
 }
 
-function triggerPdf() {
-  if (!S.extracting) document.getElementById('pdfInput').click();
-}
-
-async function handlePdfFile(file) {
-  if (!file||file.type!=='application/pdf') return;
-  const apiKey = localStorage.getItem('anthropic_key');
-  if (!apiKey) {
-    showToast('⚠️ Configure a API Key em ⚙️ Config primeiro','err');
-    S.tab='settings'; render(); return;
-  }
-
-  S.extracting=true; S.tab='form'; S.form=emptyForm(); S.form.data=today();
-  S.editId=null; render();
-
-  try {
-    const b64 = await new Promise((res,rej) => {
-      const r=new FileReader();
-      r.onload=()=>res(r.result.split(',')[1]);
-      r.onerror=rej; r.readAsDataURL(file);
-    });
-
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:600,
-        messages:[{ role:'user', content:[
-          {type:'document', source:{type:'base64',media_type:'application/pdf',data:b64}},
-          {type:'text',text:'Analise este comprovante de pagamento brasileiro. Retorne SOMENTE JSON válido sem markdown:\n{"data":"DD/MM/YYYY","valor":0.00,"fornecedor":"nome do recebedor","forma":"Pix","numero_controle":""}'}
-        ]}]
-      })
-    });
-
-    const d = await resp.json();
-    const txt = d.content?.find(b=>b.type==='text')?.text||'{}';
-    const ex  = JSON.parse(txt.replace(/```json|```/g,'').trim());
-
-    S.form.data         = ex.data         || S.form.data;
-    S.form.fornecedor   = ex.fornecedor   || '';
-    S.form.forma        = ex.forma        || 'Pix';
-    S.form.valorTotal   = ex.valor        ? String(ex.valor) : '';
-    S.form.valorParcela = ex.valor        ? String(ex.valor) : '';
-    S.form.obs          = ex.numero_controle ? `Ctrl Pix: ${ex.numero_controle}` : '';
-
-    showToast('✅ Comprovante lido! Confira e complemente os dados.');
-  } catch(e) {
-    showToast('⚠️ Erro ao ler PDF. Preencha manualmente.','err');
-    console.error(e);
-  }
-
-  S.extracting=false; render();
-}
-
-async function salvarNome() {
-  const input = document.getElementById('nomeInput');
-  if (!input) return;
-  const nome = input.value.trim() || 'Reforma Authoria';
-  S.nomeProjeto = nome;
-  S.editandoNome = false;
-  await sbFetch('reforma_config', {
-    method: 'POST',
-    headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify({ chave: 'nome_projeto', valor: nome })
-  }).catch(()=>{});
-  render();
-}
-
-/* ══════════════════════════════════════════════════════════════
-   INICIALIZAÇÃO
-   ══════════════════════════════════════════════════════════════ */
+// ── INIT ─────────────────────────────────────────────────────────
 initDB();
 loadAll();
 </script>
